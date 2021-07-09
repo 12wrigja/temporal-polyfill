@@ -1,7 +1,8 @@
 /* global __debug__ */
 
-import { ES } from './ecmascript.mjs';
-import { MakeIntrinsicClass } from './intrinsicclass.mjs';
+import { ES } from './ecmascript';
+import {DEBUG} from './debug';
+import { MakeIntrinsicClass } from './intrinsicclass';
 import {
   YEARS,
   MONTHS,
@@ -16,7 +17,7 @@ import {
   CreateSlots,
   GetSlot,
   SetSlot
-} from './slots.mjs';
+} from './slots';
 
 export class Duration {
   constructor(
@@ -72,7 +73,7 @@ export class Duration {
     SetSlot(this, MICROSECONDS, microseconds);
     SetSlot(this, NANOSECONDS, nanoseconds);
 
-    if (typeof __debug__ !== 'undefined' && __debug__) {
+    if (DEBUG) {
       Object.defineProperty(this, '_repr_', {
         value: `${this[Symbol.toStringTag]} <${ES.TemporalDurationToString(this)}>`,
         writable: false,
@@ -494,8 +495,9 @@ export class Duration {
   }
   toLocaleString(locales = undefined, options = undefined) {
     if (!ES.IsTemporalDuration(this)) throw new TypeError('invalid receiver');
-    if (typeof Intl !== 'undefined' && typeof Intl.DurationFormat !== 'undefined') {
-      return new Intl.DurationFormat(locales, options).format(this);
+    if (typeof Intl !== 'undefined' &&
+        typeof (Intl as any).DurationFormat !== 'undefined') {
+      return new (Intl as any).DurationFormat(locales, options).format(this);
     }
     console.warn('Temporal.Duration.prototype.toLocaleString() requires Intl.DurationFormat.');
     return ES.TemporalDurationToString(this);

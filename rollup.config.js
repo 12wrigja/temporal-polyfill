@@ -2,6 +2,7 @@ import commonjs from '@rollup/plugin-commonjs';
 import resolve from '@rollup/plugin-node-resolve';
 import babel from '@rollup/plugin-babel';
 import replace from '@rollup/plugin-replace';
+import typescript from '@rollup/plugin-typescript';
 import { terser } from 'rollup-plugin-terser';
 import { env } from 'process';
 
@@ -10,9 +11,10 @@ const libName = 'temporal';
 
 export default [
   {
-    input: 'lib/index.mjs',
+    input: 'lib/index.ts',
     plugins: [
-      replace({ exclude: 'node_modules/**', __debug__: !isProduction }),
+      typescript(),
+      replace({ exclude: 'node_modules/**', 'globalThis.__debug__': !isProduction, preventAssignment: true }),
       commonjs(),
       resolve({ preferBuiltins: false }),
       babel({

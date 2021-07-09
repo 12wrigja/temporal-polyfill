@@ -17,6 +17,7 @@ const ObjectDefineProperty = Object.defineProperty;
 const ObjectIs = Object.is;
 const ObjectEntries = Object.entries;
 
+import {DEBUG} from './debug';
 import bigInt from 'big-integer';
 import Call from 'es-abstract/2020/Call';
 import GetMethod from 'es-abstract/2020/GetMethod';
@@ -28,7 +29,7 @@ import ToPrimitive from 'es-abstract/2020/ToPrimitive';
 import ToString from 'es-abstract/2020/ToString';
 import Type from 'es-abstract/2020/Type';
 
-import { GetIntrinsic } from './intrinsicclass.mjs';
+import { GetIntrinsic } from './intrinsicclass';
 import {
   CreateSlots,
   GetSlot,
@@ -62,8 +63,8 @@ import {
   MILLISECONDS,
   MICROSECONDS,
   NANOSECONDS
-} from './slots.mjs';
-import { IsBuiltinCalendar } from './calendar.mjs';
+} from './slots';
+import { IsBuiltinCalendar } from './calendar';
 
 const DAYMILLIS = 86400000;
 const NS_MIN = bigInt(-86400).multiply(1e17);
@@ -121,7 +122,7 @@ const ALLOWED_UNITS = [
   'microsecond',
   'nanosecond'
 ];
-const SINGULAR_PLURAL_UNITS = [
+const SINGULAR_PLURAL_UNITS: Array<[string, string]> = [
   ['years', 'year'],
   ['months', 'month'],
   ['weeks', 'week'],
@@ -134,7 +135,7 @@ const SINGULAR_PLURAL_UNITS = [
   ['nanoseconds', 'nanosecond']
 ];
 
-import * as PARSE from './regex.mjs';
+import * as PARSE from './regex';
 
 const ES2020 = {
   Call,
@@ -349,9 +350,9 @@ export const ES = ObjectAssign({}, ES2020, {
     const weeks = ES.ToInteger(match[4]) * sign;
     const days = ES.ToInteger(match[5]) * sign;
     const hours = ES.ToInteger(match[6]) * sign;
-    let fHours = match[7];
+    let fHours: number|string = match[7];
     let minutes = ES.ToInteger(match[8]) * sign;
-    let fMinutes = match[9];
+    let fMinutes: number|string = match[9];
     let seconds = ES.ToInteger(match[10]) * sign;
     let fSeconds = match[11] + '000000000';
     let milliseconds = ES.ToInteger(fSeconds.slice(0, 3)) * sign;
@@ -711,6 +712,8 @@ export const ES = ObjectAssign({}, ES2020, {
       case 8:
       case 9:
         return { precision, unit: 'nanosecond', increment: 10 ** (9 - precision) };
+      default:
+        throw new RangeError(`fractionalSecondDigits must be 'auto' or 0 through 9, not ${digits}`);
     }
   },
   ToLargestTemporalUnit: (options, fallback, disallowedStrings = [], autoValue) => {
@@ -1468,7 +1471,7 @@ export const ES = ObjectAssign({}, ES2020, {
     SetSlot(result, CALENDAR, calendar);
     SetSlot(result, DATE_BRAND, true);
 
-    if (typeof __debug__ !== 'undefined' && __debug__) {
+    if (DEBUG) {
       ObjectDefineProperty(result, '_repr_', {
         value: `${result[Symbol.toStringTag]} <${ES.TemporalDateToString(result)}>`,
         writable: false,
@@ -1499,7 +1502,7 @@ export const ES = ObjectAssign({}, ES2020, {
     SetSlot(result, ISO_NANOSECOND, ns);
     SetSlot(result, CALENDAR, calendar);
 
-    if (typeof __debug__ !== 'undefined' && __debug__) {
+    if (DEBUG) {
       Object.defineProperty(result, '_repr_', {
         value: `${result[Symbol.toStringTag]} <${ES.TemporalDateTimeToString(result, 'auto')}>`,
         writable: false,
@@ -1525,7 +1528,7 @@ export const ES = ObjectAssign({}, ES2020, {
     SetSlot(result, CALENDAR, calendar);
     SetSlot(result, MONTH_DAY_BRAND, true);
 
-    if (typeof __debug__ !== 'undefined' && __debug__) {
+    if (DEBUG) {
       Object.defineProperty(result, '_repr_', {
         value: `${result[Symbol.toStringTag]} <${ES.TemporalMonthDayToString(result)}>`,
         writable: false,
@@ -1551,7 +1554,7 @@ export const ES = ObjectAssign({}, ES2020, {
     SetSlot(result, CALENDAR, calendar);
     SetSlot(result, YEAR_MONTH_BRAND, true);
 
-    if (typeof __debug__ !== 'undefined' && __debug__) {
+    if (DEBUG) {
       Object.defineProperty(result, '_repr_', {
         value: `${result[Symbol.toStringTag]} <${ES.TemporalYearMonthToString(result)}>`,
         writable: false,
@@ -1578,7 +1581,7 @@ export const ES = ObjectAssign({}, ES2020, {
     const instant = new TemporalInstant(GetSlot(result, EPOCHNANOSECONDS));
     SetSlot(result, INSTANT, instant);
 
-    if (typeof __debug__ !== 'undefined' && __debug__) {
+    if (DEBUG) {
       Object.defineProperty(result, '_repr_', {
         value: `${result[Symbol.toStringTag]} <${ES.TemporalZonedDateTimeToString(result, 'auto')}>`,
         writable: false,
@@ -1981,7 +1984,7 @@ export const ES = ObjectAssign({}, ES2020, {
     if (timeZone !== undefined) timeZoneString = ES.BuiltinTimeZoneGetOffsetStringFor(outputTimeZone, instant);
     return `${year}-${month}-${day}T${hour}:${minute}${seconds}${timeZoneString}`;
   },
-  TemporalDurationToString: (duration, precision = 'auto', options = undefined) => {
+  TemporalDurationToString: (duration, precision: 'auto'|number = 'auto', options = undefined) => {
     function formatNumber(num) {
       if (num <= NumberMaxSafeInteger) return num.toString(10);
       return bigInt(num).toString();
@@ -4010,8 +4013,8 @@ export const ES = ObjectAssign({}, ES2020, {
         oneYearDays = MathAbs(oneYearDays);
         const divisor = bigInt(oneYearDays).multiply(dayLengthNs);
         nanoseconds = divisor.multiply(years).plus(bigInt(days).multiply(dayLengthNs)).plus(nanoseconds);
-        const rounded = ES.RoundNumberToIncrement(nanoseconds, divisor * increment, roundingMode);
-        total = nanoseconds.toJSNumber() / divisor;
+        const rounded = ES.RoundNumberToIncrement(nanoseconds, divisor.multiply(increment).toJSNumber(), roundingMode);
+        total = nanoseconds.toJSNumber() / divisor.toJSNumber();
         years = rounded.divide(divisor).toJSNumber();
         nanoseconds = months = weeks = days = 0;
         break;
@@ -4052,8 +4055,8 @@ export const ES = ObjectAssign({}, ES2020, {
         oneMonthDays = MathAbs(oneMonthDays);
         const divisor = bigInt(oneMonthDays).multiply(dayLengthNs);
         nanoseconds = divisor.multiply(months).plus(bigInt(days).multiply(dayLengthNs)).plus(nanoseconds);
-        const rounded = ES.RoundNumberToIncrement(nanoseconds, divisor * increment, roundingMode);
-        total = nanoseconds.toJSNumber() / divisor;
+        const rounded = ES.RoundNumberToIncrement(nanoseconds, divisor.multiply(increment).toJSNumber(), roundingMode);
+        total = nanoseconds.toJSNumber() / divisor.toJSNumber();
         months = rounded.divide(divisor).toJSNumber();
         nanoseconds = weeks = days = 0;
         break;
@@ -4074,8 +4077,8 @@ export const ES = ObjectAssign({}, ES2020, {
         oneWeekDays = MathAbs(oneWeekDays);
         const divisor = bigInt(oneWeekDays).multiply(dayLengthNs);
         nanoseconds = divisor.multiply(weeks).plus(bigInt(days).multiply(dayLengthNs)).plus(nanoseconds);
-        const rounded = ES.RoundNumberToIncrement(nanoseconds, divisor * increment, roundingMode);
-        total = nanoseconds.toJSNumber() / divisor;
+        const rounded = ES.RoundNumberToIncrement(nanoseconds, divisor.multiply(increment).toJSNumber(), roundingMode);
+        total = nanoseconds.toJSNumber() / divisor.toJSNumber();
         weeks = rounded.divide(divisor).toJSNumber();
         nanoseconds = days = 0;
         break;
@@ -4083,8 +4086,8 @@ export const ES = ObjectAssign({}, ES2020, {
       case 'day': {
         const divisor = bigInt(dayLengthNs);
         nanoseconds = divisor.multiply(days).plus(nanoseconds);
-        const rounded = ES.RoundNumberToIncrement(nanoseconds, divisor * increment, roundingMode);
-        total = nanoseconds.toJSNumber() / divisor;
+        const rounded = ES.RoundNumberToIncrement(nanoseconds, divisor.multiply(increment).toJSNumber(), roundingMode);
+        total = nanoseconds.toJSNumber() / divisor.toJSNumber();
         days = rounded.divide(divisor).toJSNumber();
         nanoseconds = 0;
         break;
@@ -4190,6 +4193,7 @@ export const ES = ObjectAssign({}, ES2020, {
       case 'object':
       case 'number':
       case 'symbol':
+      default:
         throw new TypeError(`cannot convert ${typeof arg} to bigint`);
       case 'string':
         if (!prim.match(/^\s*(?:[+-]?\d+\s*)?$/)) {
@@ -4198,7 +4202,7 @@ export const ES = ObjectAssign({}, ES2020, {
       // eslint: no-fallthrough: false
       case 'bigint':
         try {
-          return bigInt(prim);
+          return bigInt(prim as bigint);
         } catch (e) {
           if (e instanceof Error && e.message.startsWith('Invalid integer')) throw new SyntaxError(e.message);
           throw e;

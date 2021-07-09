@@ -75,10 +75,10 @@ rules:
   '@typescript-eslint/ban-ts-comment': off
 overrides:
   - files:
-      - lib/duration.mjs
-      - lib/init.js
-      - test/all.mjs
-      - test/exhaust.mjs
-      - test/validStrings.mjs
+      - lib/duration.ts
+      - lib/init.ts
+      - test/all.ts
+      - test/exhaust.ts
+      - test/validStrings.ts
     rules:
       no-console: off

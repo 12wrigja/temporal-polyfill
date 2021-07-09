@@ -1,9 +1,10 @@
 /* global __debug__ */
 
-import { ES } from './ecmascript.mjs';
-import { DateTimeFormat } from './intl.mjs';
-import { GetIntrinsic, MakeIntrinsicClass } from './intrinsicclass.mjs';
-import { EPOCHNANOSECONDS, CreateSlots, GetSlot, SetSlot } from './slots.mjs';
+import {DEBUG} from './debug';
+import { ES } from './ecmascript';
+import { DateTimeFormat } from './intl';
+import { GetIntrinsic, MakeIntrinsicClass } from './intrinsicclass';
+import { EPOCHNANOSECONDS, CreateSlots, GetSlot, SetSlot } from './slots';
 
 import bigInt from 'big-integer';
 
@@ -30,7 +31,7 @@ export class Instant {
     CreateSlots(this);
     SetSlot(this, EPOCHNANOSECONDS, ns);
 
-    if (typeof __debug__ !== 'undefined' && __debug__) {
+    if (DEBUG) {
       const repr = ES.TemporalInstantToString(this, undefined, 'auto');
       Object.defineProperty(this, '_repr_', {
         value: `${this[Symbol.toStringTag]} <${repr}>`,
@@ -292,5 +293,5 @@ export class Instant {
 MakeIntrinsicClass(Instant, 'Temporal.Instant');
 
 function bigIntIfAvailable(wrapper) {
-  return typeof BigInt === 'undefined' ? wrapper : wrapper.value;
+  return typeof globalThis.BigInt === 'undefined' ? wrapper : wrapper.value;
 }

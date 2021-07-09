@@ -1,8 +1,9 @@
 /* global __debug__ */
 
-import { ES } from './ecmascript.mjs';
-import { GetIntrinsic, MakeIntrinsicClass, DefineIntrinsic } from './intrinsicclass.mjs';
-import { CALENDAR_ID, ISO_YEAR, ISO_MONTH, ISO_DAY, CreateSlots, GetSlot, HasSlot, SetSlot } from './slots.mjs';
+import {DEBUG} from './debug';
+import { ES } from './ecmascript';
+import { GetIntrinsic, MakeIntrinsicClass, DefineIntrinsic } from './intrinsicclass';
+import { CALENDAR_ID, ISO_YEAR, ISO_MONTH, ISO_DAY, CreateSlots, GetSlot, HasSlot, SetSlot } from './slots';
 
 const ArrayIncludes = Array.prototype.includes;
 const ArrayPrototypePush = Array.prototype.push;
@@ -23,7 +24,7 @@ export class Calendar {
     CreateSlots(this);
     SetSlot(this, CALENDAR_ID, id);
 
-    if (typeof __debug__ !== 'undefined' && __debug__) {
+    if (DEBUG) {
       Object.defineProperty(this, '_repr_', {
         value: `${this[Symbol.toStringTag]} <${id}>`,
         writable: false,
@@ -348,14 +349,16 @@ function resolveNonLunisolarMonth(calendarDate, overflow = undefined, monthsPerY
  * because each object's cache is thrown away when the object is GC-ed.
  */
 class OneObjectCache {
-  constructor(cacheToClone = undefined) {
-    this.map = new Map();
-    this.calls = 0;
-    this.now = globalThis.performance ? globalThis.performance.now() : Date.now();
-    this.hits = 0;
-    this.misses = 0;
+  map = new Map();
+  calls = 0;
+  now: number;
+  hits = 0;
+  misses = 0;
+  constructor(cacheToClone: OneObjectCache = undefined) {
+    this.now =
+        globalThis.performance ? globalThis.performance.now() : Date.now();
     if (cacheToClone !== undefined) {
-      let i = cacheToClone.length;
+      let i = 0;  // TODO why was this originally cacheToClone.length ?
       for (const entry of cacheToClone.map.entries()) {
         if (++i > OneObjectCache.MAX_CACHE_ENTRIES) break;
         this.map.set(...entry);
@@ -389,23 +392,25 @@ class OneObjectCache {
     OneObjectCache.objectMap.set(obj, this);
     this.report();
   }
+
+  static objectMap = new WeakMap();
+  static MAX_CACHE_ENTRIES = 1000;
+
+  /**
+   * Returns a WeakMap-backed cache that's used to store expensive results
+   * that are associated with a particular Temporal object instance.
+   *
+   * @param obj - object to associate with the cache
+   */
+  static getCacheForObject(obj) {
+    let cache = OneObjectCache.objectMap.get(obj);
+    if (!cache) {
+      cache = new OneObjectCache();
+      OneObjectCache.objectMap.set(obj, cache);
+    }
+    return cache;
+  };
 }
-OneObjectCache.objectMap = new WeakMap();
-OneObjectCache.MAX_CACHE_ENTRIES = 1000;
-/**
- * Returns a WeakMap-backed cache that's used to store expensive results
- * that are associated with a particular Temporal object instance.
- *
- * @param obj - object to associate with the cache
- */
-OneObjectCache.getCacheForObject = function (obj) {
-  let cache = OneObjectCache.objectMap.get(obj);
-  if (!cache) {
-    cache = new OneObjectCache();
-    OneObjectCache.objectMap.set(obj, cache);
-  }
-  return cache;
-};
 
 function toUtcIsoDateString({ isoYear, isoMonth, isoDay }) {
   const yearString = ES.ISOYearString(isoYear);
@@ -422,10 +427,57 @@ function simpleDateDiff(one, two) {
   };
 }
 
+interface NonIsoHelperBase {
+  id?: string;
+  isoToCalendarDate(isoDate: any, cache: any): any;
+  validateCalendarDate(calendarDate: any): void;
+  adjustCalendarDate(
+      calendarDate: any, cache?: any, overflow?: any,
+      fromLegacyDate?: any): any;
+  regulateMonthDayNaive(calendarDate: any, overflow: any, cache: any): any;
+  calendarToIsoDate(date: any, overflow: string, cache: any): any;
+  temporalToCalendarDate(date: any, cache: any): any;
+  compareCalendarDates(date1: any, date2: any): any;
+  regulateDate(calendarDate: any, overflow: string, cache: any): any;
+  addDaysIso(isoDate: any, days: any, cache?: any): any;
+  addDaysCalendar(calendarDate: any, days: any, cache: any): any;
+  addMonthsCalendar(calendarDate: any, months: any, overflow: any, cache: any):
+      any;
+  addCalendar(
+      calendarDate: any,
+      {years, months, weeks, days}:
+          {years?: number; months?: number; weeks?: number; days?: number;},
+      overflow: any, cache: any): any;
+  untilCalendar(
+      calendarOne: any, calendarTwo: any, largestUnit: any, cache: any):
+      {years: number; months: number; weeks: number; days: number;};
+  daysInMonth(calendarDate: any, cache: any): any;
+  daysInPreviousMonth(calendarDate: any, cache: any): any;
+  startOfCalendarYear(calendarDate: any):
+      {year: any; month: number; day: number;};
+  startOfCalendarMonth(calendarDate: any):
+      {year: any; month: any; day: number;};
+  calendarDaysUntil(calendarOne: any, calendarTwo: any, cache: any): any;
+  isoDaysUntil(oneIso: any, twoIso: any): any;
+  eraLength: 'long'|'short'|'narrow';
+  // reviseIntlEra can optionally be defined on subclasses of the base
+  reviseIntlEra?
+      (calendarDate: any, isoDate?: any): {era: number, eraYear: number};
+  hasEra?: boolean;
+  constantEra?: number;
+  checkIcuBugs?(calendarDate: any, isoDate: any);
+  calendarType?: string;
+  monthsInYear?(calendarDate: any, cache: any);
+  maximumMonthLength?(calendarDate: any): any;
+  minimumMonthLength?(calendarDate: any): any;
+  estimateIsoDate?(isoDate: any): any;
+  monthDayFromFields(fields: any, overflow: any, cache: any);
+}
+
 /**
  * Implementation that's common to all non-trivial non-ISO calendars
  */
-const nonIsoHelperBase = {
+const nonIsoHelperBase: NonIsoHelperBase = {
   // The properties and methods below here should be the same for all lunar/lunisolar calendars.
   isoToCalendarDate(isoDate, cache) {
     let { year: isoYear, month: isoMonth, day: isoDay } = isoDate;
@@ -437,7 +489,7 @@ const nonIsoHelperBase = {
       day: 'numeric',
       month: 'numeric',
       year: 'numeric',
-      era: this.eraLength,
+      era: this.eraLength as 'short' | 'long' | 'narrow',
       timeZone: 'UTC'
     });
     let parts, isoString;
@@ -447,7 +499,7 @@ const nonIsoHelperBase = {
     } catch (e) {
       throw new RangeError(`Invalid ISO date: ${JSON.stringify({ isoYear, isoMonth, isoDay })}`);
     }
-    const result = {};
+    const result: any = {};
     for (let { type, value } of parts) {
       if (type === 'year') result.eraYear = +value;
       if (type === 'relatedYear') result.eraYear = +value;
@@ -1026,7 +1078,7 @@ const helperHebrew = ObjectAssign({}, nonIsoHelperBase, {
     } else {
       // When called without input coming from legacy Date output, simply ensure
       // that all fields are present.
-      this.validateCalendarDate(calendarDate);
+      (this as unknown as NonIsoHelperBase).validateCalendarDate(calendarDate);
       if (month === undefined) {
         if (monthCode.endsWith('L')) {
           if (monthCode !== 'M05L') {
@@ -1083,7 +1135,7 @@ const helperIslamic = ObjectAssign({}, nonIsoHelperBase, {
   calendarType: 'lunar',
   inLeapYear(calendarDate, cache) {
     // In leap years, the 12th month has 30 days. In non-leap years: 29.
-    const days = this.daysInMonth({ year: calendarDate.year, month: 12, day: 1 }, cache);
+    const days = (this as unknown as NonIsoHelperBase).daysInMonth({ year: calendarDate.year, month: 12, day: 1 }, cache);
     return days === 30;
   },
   monthsInYear(/* calendarYear, cache */) {
@@ -1095,7 +1147,7 @@ const helperIslamic = ObjectAssign({}, nonIsoHelperBase, {
   DAYS_PER_ISO_YEAR: 365.2425,
   constantEra: 'ah',
   estimateIsoDate(calendarDate) {
-    const { year } = this.adjustCalendarDate(calendarDate);
+    const { year } = (this as unknown as NonIsoHelperBase).adjustCalendarDate(calendarDate);
     return { year: Math.floor((year * this.DAYS_PER_ISLAMIC_YEAR) / this.DAYS_PER_ISO_YEAR) + 622, month: 1, day: 1 };
   }
 });
@@ -1123,7 +1175,7 @@ const helperPersian = ObjectAssign({}, nonIsoHelperBase, {
   },
   constantEra: 'ap',
   estimateIsoDate(calendarDate) {
-    const { year } = this.adjustCalendarDate(calendarDate);
+    const { year } = (this as unknown as NonIsoHelperBase).adjustCalendarDate(calendarDate);
     return { year: year + 621, month: 1, day: 1 };
   }
 });
@@ -1176,7 +1228,7 @@ const helperIndian = ObjectAssign({}, nonIsoHelperBase, {
   estimateIsoDate(calendarDate) {
     // FYI, this "estimate" is always the exact ISO date, which makes the Indian
     // calendar fast!
-    calendarDate = this.adjustCalendarDate(calendarDate);
+    calendarDate = (this as unknown as NonIsoHelperBase).adjustCalendarDate(calendarDate);
     const monthInfo = this.getMonthInfo(calendarDate);
     const isoYear = calendarDate.year + 78 + (monthInfo.nextYear ? 1 : 0);
     const isoMonth = monthInfo.month;
@@ -1409,13 +1461,13 @@ const makeHelperGregorian = (id, originalEras) => {
       // Because this is not a lunisolar calendar, it's safe to convert monthCode to a number
       const { month, monthCode } = calendarDate;
       if (month === undefined) calendarDate = { ...calendarDate, month: monthCodeNumberPart(monthCode) };
-      this.validateCalendarDate(calendarDate);
+      (this as unknown as NonIsoHelperBase).validateCalendarDate(calendarDate);
       calendarDate = this.completeEraYear(calendarDate);
       calendarDate = ES.Call(nonIsoHelperBase.adjustCalendarDate, this, [calendarDate, cache, overflow]);
       return calendarDate;
     },
     estimateIsoDate(calendarDate) {
-      calendarDate = this.adjustCalendarDate(calendarDate);
+      calendarDate = (this as unknown as NonIsoHelperBase).adjustCalendarDate(calendarDate);
       const { year, month, day } = calendarDate;
       const { anchorEra } = this;
       const isoYearEstimate = year + anchorEra.isoEpoch.year - (anchorEra.hasYearZero ? 0 : 1);
@@ -1573,7 +1625,7 @@ const helperJapanese = ObjectAssign(
     // default "short" era, so need to use the long format.
     eraLength: 'long',
     calendarIsVulnerableToJulianBug: true,
-    reviseIntlEra(calendarDate, isoDate) {
+    reviseIntlEra(this: typeof helperJapanese, calendarDate, isoDate) {
       const { era, eraYear } = calendarDate;
       const { year: isoYear } = isoDate;
       if (this.eras.find((e) => e.name === era)) return { era, eraYear };
@@ -1594,7 +1646,7 @@ const helperChinese = ObjectAssign({}, nonIsoHelperBase, {
   },
   minimumMonthLength: (/* calendarDate */) => 29,
   maximumMonthLength: (/* calendarDate */) => 30,
-  getMonthList(calendarYear, cache) {
+  getMonthList(calendarYear, cache): {[key: string]: {monthIndex: string, daysInMonth: number}} {
     if (calendarYear === undefined) {
       throw new TypeError('Missing year');
     }
@@ -1617,7 +1669,7 @@ const helperChinese = ObjectAssign({}, nonIsoHelperBase, {
       const newYearGuess = dateTimeFormat.formatToParts(legacyDate);
       const calendarMonthString = newYearGuess.find((tv) => tv.type === 'month').value;
       const calendarDay = +newYearGuess.find((tv) => tv.type === 'day').value;
-      let calendarYearToVerify = newYearGuess.find((tv) => tv.type === 'relatedYear');
+      let calendarYearToVerify: Intl.DateTimeFormatPart|number|undefined = newYearGuess.find((tv) => (tv.type as string) === 'relatedYear');
       if (calendarYearToVerify !== undefined) {
         calendarYearToVerify = +calendarYearToVerify.value;
       } else {
@@ -1694,7 +1746,7 @@ const helperChinese = ObjectAssign({}, nonIsoHelperBase, {
     } else {
       // When called without input coming from legacy Date output,
       // simply ensure that all fields are present.
-      this.validateCalendarDate(calendarDate);
+      (this as unknown as NonIsoHelperBase).validateCalendarDate(calendarDate);
       if (year === undefined) year = eraYear;
       if (eraYear === undefined) eraYear = year;
       if (month === undefined) {
@@ -1768,7 +1820,7 @@ const helperDangi = ObjectAssign({}, { ...helperChinese, id: 'dangi' });
  * ISO and non-ISO implementations vs. code that was very different.
  */
 const nonIsoGeneralImpl = {
-  dateFromFields(fields, options, calendar) {
+  dateFromFields(this: (typeof nonIsoGeneralImpl)&{helper: NonIsoHelperBase}, fields, options, calendar) {
     const overflow = ES.ToTemporalOverflow(options);
     const cache = new OneObjectCache();
     // Intentionally alphabetical
@@ -1785,7 +1837,7 @@ const nonIsoGeneralImpl = {
     cache.setObject(result);
     return result;
   },
-  yearMonthFromFields(fields, options, calendar) {
+  yearMonthFromFields(this: (typeof nonIsoGeneralImpl)&{helper: NonIsoHelperBase}, fields, options, calendar) {
     const overflow = ES.ToTemporalOverflow(options);
     const cache = new OneObjectCache();
     // Intentionally alphabetical
@@ -1801,7 +1853,7 @@ const nonIsoGeneralImpl = {
     cache.setObject(result);
     return result;
   },
-  monthDayFromFields(fields, options, calendar) {
+  monthDayFromFields(this: (typeof nonIsoGeneralImpl)&{helper: NonIsoHelperBase}, fields, options, calendar) {
     const overflow = ES.ToTemporalOverflow(options);
     // All built-in calendars require `day`, but some allow other fields to be
     // substituted for `month`. And for lunisolar calendars, either `monthCode`
@@ -1846,7 +1898,7 @@ const nonIsoGeneralImpl = {
     }
     return { ...original, ...additionalFields };
   },
-  dateAdd(date, duration, overflow, calendar) {
+  dateAdd(this: (typeof nonIsoGeneralImpl)&{helper: NonIsoHelperBase}, date, duration, overflow, calendar) {
     const { years, months, weeks, days } = duration;
     const cache = OneObjectCache.getCacheForObject(date);
     const calendarDate = this.helper.temporalToCalendarDate(date, cache);
@@ -1859,7 +1911,7 @@ const nonIsoGeneralImpl = {
     newCache.setObject(newTemporalObject);
     return newTemporalObject;
   },
-  dateUntil(one, two, largestUnit) {
+  dateUntil(this: (typeof nonIsoGeneralImpl)&{helper: NonIsoHelperBase}, one, two, largestUnit) {
     const cacheOne = OneObjectCache.getCacheForObject(one);
     const cacheTwo = OneObjectCache.getCacheForObject(two);
     const calendarOne = this.helper.temporalToCalendarDate(one, cacheOne);
@@ -1867,34 +1919,34 @@ const nonIsoGeneralImpl = {
     const result = this.helper.untilCalendar(calendarOne, calendarTwo, largestUnit, cacheOne);
     return result;
   },
-  year(date) {
+  year(this: (typeof nonIsoGeneralImpl)&{helper: NonIsoHelperBase}, date) {
     const cache = OneObjectCache.getCacheForObject(date);
     const calendarDate = this.helper.temporalToCalendarDate(date, cache);
     return calendarDate.year;
   },
-  month(date) {
+  month(this: (typeof nonIsoGeneralImpl)&{helper: NonIsoHelperBase}, date) {
     const cache = OneObjectCache.getCacheForObject(date);
     const calendarDate = this.helper.temporalToCalendarDate(date, cache);
     return calendarDate.month;
   },
-  day(date) {
+  day(this: (typeof nonIsoGeneralImpl)&{helper: NonIsoHelperBase}, date) {
     const cache = OneObjectCache.getCacheForObject(date);
     const calendarDate = this.helper.temporalToCalendarDate(date, cache);
     return calendarDate.day;
   },
-  era(date) {
+  era(this: (typeof nonIsoGeneralImpl)&{helper: NonIsoHelperBase}, date) {
     if (!this.helper.hasEra) return undefined;
     const cache = OneObjectCache.getCacheForObject(date);
     const calendarDate = this.helper.temporalToCalendarDate(date, cache);
     return calendarDate.era;
   },
-  eraYear(date) {
+  eraYear(this: (typeof nonIsoGeneralImpl)&{helper: NonIsoHelperBase}, date) {
     if (!this.helper.hasEra) return undefined;
     const cache = OneObjectCache.getCacheForObject(date);
     const calendarDate = this.helper.temporalToCalendarDate(date, cache);
     return calendarDate.eraYear;
   },
-  monthCode(date) {
+  monthCode(this: (typeof nonIsoGeneralImpl)&{helper: NonIsoHelperBase}, date) {
     const cache = OneObjectCache.getCacheForObject(date);
     const calendarDate = this.helper.temporalToCalendarDate(date, cache);
     return calendarDate.monthCode;
@@ -1902,7 +1954,7 @@ const nonIsoGeneralImpl = {
   dayOfWeek(date) {
     return impl['iso8601'].dayOfWeek(date);
   },
-  dayOfYear(date) {
+  dayOfYear(this: (typeof nonIsoGeneralImpl)&{helper: NonIsoHelperBase}, date) {
     const cache = OneObjectCache.getCacheForObject(date);
     const calendarDate = this.helper.isoToCalendarDate(date, cache);
     const startOfYear = this.helper.startOfCalendarYear(calendarDate);
@@ -1915,7 +1967,7 @@ const nonIsoGeneralImpl = {
   daysInWeek(date) {
     return impl['iso8601'].daysInWeek(date);
   },
-  daysInMonth(date) {
+  daysInMonth(this: (typeof nonIsoGeneralImpl)&{helper: NonIsoHelperBase}, date) {
     const cache = OneObjectCache.getCacheForObject(date);
     const calendarDate = this.helper.temporalToCalendarDate(date, cache);
 
@@ -1932,7 +1984,7 @@ const nonIsoGeneralImpl = {
     const result = this.helper.calendarDaysUntil(startOfMonthCalendar, startOfNextMonthCalendar, cache);
     return result;
   },
-  daysInYear(date) {
+  daysInYear(this: (typeof nonIsoGeneralImpl)&{helper: NonIsoHelperBase}, date) {
     if (!HasSlot(date, ISO_YEAR)) date = ES.ToTemporalDate(date);
     const cache = OneObjectCache.getCacheForObject(date);
     const calendarDate = this.helper.temporalToCalendarDate(date, cache);
@@ -1941,13 +1993,13 @@ const nonIsoGeneralImpl = {
     const result = this.helper.calendarDaysUntil(startOfYearCalendar, startOfNextYearCalendar, cache);
     return result;
   },
-  monthsInYear(date) {
+  monthsInYear(this: (typeof nonIsoGeneralImpl)&{helper: NonIsoHelperBase}, date) {
     const cache = OneObjectCache.getCacheForObject(date);
     const calendarDate = this.helper.temporalToCalendarDate(date, cache);
     const result = this.helper.monthsInYear(calendarDate, cache);
     return result;
   },
-  inLeapYear(date) {
+  inLeapYear(this: (typeof nonIsoGeneralImpl)&{helper: NonIsoHelperBase}, date) {
     if (!HasSlot(date, ISO_YEAR)) date = ES.ToTemporalDate(date);
     const cache = OneObjectCache.getCacheForObject(date);
     const calendarDate = this.helper.temporalToCalendarDate(date, cache);

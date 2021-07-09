@@ -1,5 +1,5 @@
-import { ES } from './ecmascript.mjs';
-import { GetIntrinsic } from './intrinsicclass.mjs';
+import { ES } from './ecmascript';
+import { GetIntrinsic } from './intrinsicclass';
 import {
   GetSlot,
   INSTANT,
@@ -14,8 +14,8 @@ import {
   ISO_NANOSECOND,
   CALENDAR,
   TIME_ZONE
-} from './slots.mjs';
-import { TimeZone } from './timezone.mjs';
+} from './slots';
+import { TimeZone } from './timezone';
 
 const DATE = Symbol('date');
 const YM = Symbol('ym');
@@ -41,7 +41,7 @@ const descriptor = (value) => {
 const IntlDateTimeFormat = globalThis.Intl.DateTimeFormat;
 const ObjectAssign = Object.assign;
 
-export function DateTimeFormat(locale = IntlDateTimeFormat().resolvedOptions().locale, options = {}) {
+export function DateTimeFormat(this: Intl.DateTimeFormat, locale = IntlDateTimeFormat().resolvedOptions().locale, options: Partial<Intl.DateTimeFormatOptions> = {}): void {
   if (!(this instanceof DateTimeFormat)) return new DateTimeFormat(locale, options);
 
   this[TZ_GIVEN] = options.timeZone ? options.timeZone : null;
@@ -58,11 +58,11 @@ export function DateTimeFormat(locale = IntlDateTimeFormat().resolvedOptions().l
   this[INST] = new IntlDateTimeFormat(locale, instantAmend(options));
 }
 
-DateTimeFormat.supportedLocalesOf = function (...args) {
-  return IntlDateTimeFormat.supportedLocalesOf(...args);
+DateTimeFormat.supportedLocalesOf = function(locales, options) {
+  return IntlDateTimeFormat.supportedLocalesOf(locales, options);
 };
 
-const properties = {
+const properties: Partial<typeof IntlDateTimeFormat.prototype> = {
   resolvedOptions: descriptor(resolvedOptions),
   format: descriptor(format),
   formatRange: descriptor(formatRange)
@@ -78,7 +78,7 @@ if ('formatRangeToParts' in IntlDateTimeFormat.prototype) {
 
 DateTimeFormat.prototype = Object.create(IntlDateTimeFormat.prototype, properties);
 
-function resolvedOptions() {
+function resolvedOptions(this: typeof DateTimeFormat) {
   return this[ORIGINAL].resolvedOptions();
 }
 
@@ -88,7 +88,7 @@ function adjustFormatterTimeZone(formatter, timeZone) {
   return new IntlDateTimeFormat(options.locale, { ...options, timeZone });
 }
 
-function format(datetime, ...rest) {
+function format(this: typeof DateTimeFormat, datetime, ...rest) {
   let { instant, formatter, timeZone } = extractOverrides(datetime, this);
   if (instant && formatter) {
     formatter = adjustFormatterTimeZone(formatter, timeZone);
@@ -97,7 +97,7 @@ function format(datetime, ...rest) {
   return this[ORIGINAL].format(datetime, ...rest);
 }
 
-function formatToParts(datetime, ...rest) {
+function formatToParts(this: typeof DateTimeFormat, datetime, ...rest) {
   let { instant, formatter, timeZone } = extractOverrides(datetime, this);
   if (instant && formatter) {
     formatter = adjustFormatterTimeZone(formatter, timeZone);
@@ -106,7 +106,7 @@ function formatToParts(datetime, ...rest) {
   return this[ORIGINAL].formatToParts(datetime, ...rest);
 }
 
-function formatRange(a, b) {
+function formatRange(this: typeof DateTimeFormat, a, b) {
   if (isTemporalObject(a) || isTemporalObject(b)) {
     if (!sameTemporalType(a, b)) {
       throw new TypeError('Intl.DateTimeFormat.formatRange accepts two values of the same type');
@@ -124,7 +124,7 @@ function formatRange(a, b) {
   return this[ORIGINAL].formatRange(a, b);
 }
 
-function formatRangeToParts(a, b) {
+function formatRangeToParts(this: typeof DateTimeFormat, a, b) {
   if (isTemporalObject(a) || isTemporalObject(b)) {
     if (!sameTemporalType(a, b)) {
       throw new TypeError('Intl.DateTimeFormat.formatRangeToParts accepts two values of the same type');

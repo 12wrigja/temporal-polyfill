@@ -1,7 +1,8 @@
 /* global __debug__ */
 
-import { ES } from './ecmascript.mjs';
-import { GetIntrinsic, MakeIntrinsicClass, DefineIntrinsic } from './intrinsicclass.mjs';
+import {DEBUG} from './debug';
+import { ES } from './ecmascript';
+import { GetIntrinsic, MakeIntrinsicClass, DefineIntrinsic } from './intrinsicclass';
 import {
   TIMEZONE_ID,
   EPOCHNANOSECONDS,
@@ -17,7 +18,7 @@ import {
   CreateSlots,
   GetSlot,
   SetSlot
-} from './slots.mjs';
+} from './slots';
 
 export class TimeZone {
   constructor(timeZoneIdentifier) {
@@ -31,7 +32,7 @@ export class TimeZone {
     CreateSlots(this);
     SetSlot(this, TIMEZONE_ID, timeZoneIdentifier);
 
-    if (typeof __debug__ !== 'undefined' && __debug__) {
+    if (DEBUG) {
       Object.defineProperty(this, '_repr_', {
         value: `${this[Symbol.toStringTag]} <${timeZoneIdentifier}>`,
         writable: false,
