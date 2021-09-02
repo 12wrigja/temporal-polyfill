@@ -15,6 +15,7 @@
     // "noImplicitAny": true,
     "noImplicitReturns": true,
     "noImplicitThis": true,
+    "noImplicitOverride": true,
     "strict": false,
     "lib": [
       "es5",

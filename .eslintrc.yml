@@ -78,6 +78,10 @@ rules:
   '@typescript-eslint/no-var-requires': off
   '@typescript-eslint/ban-ts-comment': off
   '@typescript-eslint/no-explicit-any': off # TODO turn this back on
+  '@typescript-eslint/no-unused-vars':
+    - error
+    - argsIgnorePattern: "^_"
+
 overrides:
   - files:
       - lib/duration.ts
