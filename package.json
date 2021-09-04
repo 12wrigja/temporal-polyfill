@@ -65,7 +65,7 @@
     "lib"
   ],
   "dependencies": {
-    "big-integer": "^1.6.49",
+    "jsbi": "^3.2.5",
     "tslib": "^2.3.1"
   },
   "devDependencies": {

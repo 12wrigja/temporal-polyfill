@@ -4,8 +4,7 @@ import { DateTimeFormat } from './intl';
 import { GetIntrinsic, MakeIntrinsicClass } from './intrinsicclass';
 import { EPOCHNANOSECONDS, CreateSlots, GetSlot, SetSlot } from './slots';
 import { Temporal } from '..';
-
-import bigInt from 'big-integer';
+import JSBI from 'jsbi';
 
 const DISALLOWED_UNITS = ['year', 'month', 'week', 'day'];
 const MAX_DIFFERENCE_INCREMENTS = {
@@ -48,17 +47,17 @@ export class Instant implements Temporal.Instant {
   }
   get epochMilliseconds() {
     if (!ES.IsTemporalInstant(this)) throw new TypeError('invalid receiver');
-    const value = bigInt(GetSlot(this, EPOCHNANOSECONDS));
-    return +value.divide(1e6);
+    const value = JSBI.BigInt(GetSlot(this, EPOCHNANOSECONDS));
+    return JSBI.toNumber(JSBI.divide(value, JSBI.BigInt(1e6)));
   }
   get epochMicroseconds() {
     if (!ES.IsTemporalInstant(this)) throw new TypeError('invalid receiver');
-    const value = GetSlot(this, EPOCHNANOSECONDS);
-    return bigIntIfAvailable(value.divide(1e3));
+    const value = JSBI.BigInt(GetSlot(this, EPOCHNANOSECONDS));
+    return ES.ToBigIntExternal(JSBI.divide(value, JSBI.BigInt(1e3)));
   }
   get epochNanoseconds() {
     if (!ES.IsTemporalInstant(this)) throw new TypeError('invalid receiver');
-    return bigIntIfAvailable(GetSlot(this, EPOCHNANOSECONDS));
+    return ES.ToBigIntExternal(JSBI.BigInt(GetSlot(this, EPOCHNANOSECONDS)));
   }
 
   add(temporalDurationLike) {
@@ -186,7 +185,7 @@ export class Instant implements Temporal.Instant {
     other = ES.ToTemporalInstant(other);
     const one = GetSlot(this, EPOCHNANOSECONDS);
     const two = GetSlot(other, EPOCHNANOSECONDS);
-    return bigInt(one).equals(two);
+    return JSBI.equal(JSBI.BigInt(one), JSBI.BigInt(two));
   }
   toString(options = undefined) {
     if (!ES.IsTemporalInstant(this)) throw new TypeError('invalid receiver');
@@ -243,19 +242,19 @@ export class Instant implements Temporal.Instant {
 
   static fromEpochSeconds(epochSeconds) {
     epochSeconds = ES.ToNumber(epochSeconds);
-    const epochNanoseconds = bigInt(epochSeconds).multiply(1e9);
+    const epochNanoseconds = JSBI.multiply(JSBI.BigInt(epochSeconds), JSBI.BigInt(1e9));
     ES.ValidateEpochNanoseconds(epochNanoseconds);
     return new Instant(epochNanoseconds);
   }
   static fromEpochMilliseconds(epochMilliseconds) {
     epochMilliseconds = ES.ToNumber(epochMilliseconds);
-    const epochNanoseconds = bigInt(epochMilliseconds).multiply(1e6);
+    const epochNanoseconds = JSBI.multiply(JSBI.BigInt(epochMilliseconds), JSBI.BigInt(1e6));
     ES.ValidateEpochNanoseconds(epochNanoseconds);
     return new Instant(epochNanoseconds);
   }
   static fromEpochMicroseconds(epochMicroseconds) {
     epochMicroseconds = ES.ToBigInt(epochMicroseconds);
-    const epochNanoseconds = epochMicroseconds.multiply(1e3);
+    const epochNanoseconds = JSBI.multiply(epochMicroseconds, JSBI.BigInt(1e3));
     ES.ValidateEpochNanoseconds(epochNanoseconds);
     return new Instant(epochNanoseconds);
   }
@@ -273,17 +272,13 @@ export class Instant implements Temporal.Instant {
   static compare(one, two) {
     one = ES.ToTemporalInstant(one);
     two = ES.ToTemporalInstant(two);
-    one = GetSlot(one, EPOCHNANOSECONDS);
-    two = GetSlot(two, EPOCHNANOSECONDS);
-    if (bigInt(one).lesser(two)) return -1;
-    if (bigInt(one).greater(two)) return 1;
+    one = JSBI.BigInt(GetSlot(one, EPOCHNANOSECONDS));
+    two = JSBI.BigInt(GetSlot(two, EPOCHNANOSECONDS));
+    if (JSBI.lessThan(one, two)) return -1;
+    if (JSBI.greaterThan(one, two)) return 1;
     return 0;
   }
   [Symbol.toStringTag]!: 'Temporal.Instant';
 }
 
 MakeIntrinsicClass(Instant, 'Temporal.Instant');
-
-function bigIntIfAvailable(wrapper) {
-  return typeof globalThis.BigInt === 'undefined' ? wrapper : wrapper.value;
-}

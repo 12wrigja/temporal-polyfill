@@ -20,7 +20,8 @@ import {
 } from './slots';
 import { Temporal } from '..';
 
-import bigInt from 'big-integer';
+import JSBI from 'jsbi';
+import {ZERO} from './ecmascript';
 
 const ArrayPrototypePush = Array.prototype.push;
 
@@ -108,11 +109,11 @@ export class ZonedDateTime implements Temporal.ZonedDateTime {
   get epochMicroseconds() {
     if (!ES.IsTemporalZonedDateTime(this)) throw new TypeError('invalid receiver');
     const value = GetSlot(this, EPOCHNANOSECONDS);
-    return bigIntIfAvailable(value.divide(1e3));
+    return ES.ToBigIntExternal(value.divide(1e3));
   }
   get epochNanoseconds() {
     if (!ES.IsTemporalZonedDateTime(this)) throw new TypeError('invalid receiver');
-    return bigIntIfAvailable(GetSlot(this, EPOCHNANOSECONDS));
+    return ES.ToBigIntExternal(GetSlot(this, EPOCHNANOSECONDS));
   }
   get dayOfWeek() {
     if (!ES.IsTemporalZonedDateTime(this)) throw new TypeError('invalid receiver');
@@ -598,8 +599,8 @@ export class ZonedDateTime implements Temporal.ZonedDateTime {
     const dtStart = new DateTime(GetSlot(dt, ISO_YEAR), GetSlot(dt, ISO_MONTH), GetSlot(dt, ISO_DAY), 0, 0, 0, 0, 0, 0);
     const instantStart = ES.BuiltinTimeZoneGetInstantFor(timeZone, dtStart, 'compatible');
     const endNs = ES.AddZonedDateTime(instantStart, timeZone, calendar, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0);
-    const dayLengthNs = endNs.subtract(GetSlot(instantStart, EPOCHNANOSECONDS));
-    if (dayLengthNs.isZero()) {
+    const dayLengthNs = JSBI.subtract(endNs, JSBI.BigInt(GetSlot(instantStart, EPOCHNANOSECONDS)));
+    if (JSBI.equal(dayLengthNs, ZERO)) {
       throw new RangeError('cannot round a ZonedDateTime in a calendar with zero-length days');
     }
     ({ year, month, day, hour, minute, second, millisecond, microsecond, nanosecond } = ES.RoundISODateTime(
@@ -617,7 +618,7 @@ export class ZonedDateTime implements Temporal.ZonedDateTime {
       roundingMode,
       // Days are guaranteed to be shorter than Number.MAX_SAFE_INTEGER
       // (which can hold up to 104 days in nanoseconds)
-      dayLengthNs.toJSNumber()
+      JSBI.toNumber(dayLengthNs)
     ));
 
     // Now reset all DateTime fields but leave the TimeZone. The offset will
@@ -650,7 +651,7 @@ export class ZonedDateTime implements Temporal.ZonedDateTime {
     other = ES.ToTemporalZonedDateTime(other);
     const one = GetSlot(this, EPOCHNANOSECONDS);
     const two = GetSlot(other, EPOCHNANOSECONDS);
-    if (!bigInt(one).equals(two)) return false;
+    if (!JSBI.equal(JSBI.BigInt(one), JSBI.BigInt(two))) return false;
     if (!ES.TimeZoneEquals(GetSlot(this, TIME_ZONE), GetSlot(other, TIME_ZONE))) return false;
     return ES.CalendarEquals(GetSlot(this, CALENDAR), GetSlot(other, CALENDAR));
   }
@@ -769,18 +770,14 @@ export class ZonedDateTime implements Temporal.ZonedDateTime {
     two = ES.ToTemporalZonedDateTime(two);
     const ns1 = GetSlot(one, EPOCHNANOSECONDS);
     const ns2 = GetSlot(two, EPOCHNANOSECONDS);
-    if (bigInt(ns1).lesser(ns2)) return -1;
-    if (bigInt(ns1).greater(ns2)) return 1;
+    if (JSBI.lessThan(JSBI.BigInt(ns1), JSBI.BigInt(ns2))) return -1;
+    if (JSBI.greaterThan(JSBI.BigInt(ns1), JSBI.BigInt(ns2))) return 1;
     return 0;
   }
   [Symbol.toStringTag]!: 'Temporal.ZonedDateTime';
 }
 
 MakeIntrinsicClass(ZonedDateTime, 'Temporal.ZonedDateTime');
-
-function bigIntIfAvailable(wrapper) {
-  return typeof globalThis.BigInt === 'undefined' ? wrapper : wrapper.value;
-}
 
 function dateTime(zdt) {
   return ES.BuiltinTimeZoneGetPlainDateTimeFor(GetSlot(zdt, TIME_ZONE), GetSlot(zdt, INSTANT), GetSlot(zdt, CALENDAR));
