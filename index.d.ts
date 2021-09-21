@@ -520,6 +520,7 @@ export namespace Temporal {
     toLocaleString(locales?: string | string[], options?: Intl.DateTimeFormatOptions): string;
     toJSON(): string;
     toString(options?: ToStringPrecisionOptions): string;
+    readonly [Symbol.toStringTag]: 'Temporal.Duration';
   }
 
   /**
@@ -616,6 +617,7 @@ export namespace Temporal {
     toJSON(): string;
     toString(options?: InstantToStringOptions): string;
     valueOf(): never;
+    readonly [Symbol.toStringTag]: 'Temporal.Instant';
   }
 
   export interface CalendarProtocol {
@@ -779,6 +781,7 @@ export namespace Temporal {
     fields(fields: Iterable<string>): Iterable<string>;
     mergeFields(fields: Record<string, unknown>, additionalFields: Record<string, unknown>): Record<string, unknown>;
     toString(): string;
+    readonly [Symbol.toStringTag]: 'Temporal.Calendar';
   }
 
   export type PlainDateLike = {
@@ -875,6 +878,7 @@ export namespace Temporal {
     toJSON(): string;
     toString(options?: ShowCalendarOption): string;
     valueOf(): never;
+    readonly [Symbol.toStringTag]: 'Temporal.PlainDate';
   }
 
   export type PlainDateTimeLike = {
@@ -1044,6 +1048,7 @@ export namespace Temporal {
     toJSON(): string;
     toString(options?: CalendarTypeToStringOptions): string;
     valueOf(): never;
+    readonly [Symbol.toStringTag]: 'Temporal.PlainDateTime';
   }
 
   export type PlainMonthDayLike = {
@@ -1078,6 +1083,7 @@ export namespace Temporal {
     toJSON(): string;
     toString(options?: ShowCalendarOption): string;
     valueOf(): never;
+    readonly [Symbol.toStringTag]: 'Temporal.PlainMonthDay';
   }
 
   // Temporal.PlainTime's `calendar` field is a Temporal.Calendar, not a
@@ -1215,6 +1221,7 @@ export namespace Temporal {
     toJSON(): string;
     toString(options?: ToStringPrecisionOptions): string;
     valueOf(): never;
+    readonly [Symbol.toStringTag]: 'Temporal.PlainTime';
   }
 
   /**
@@ -1272,6 +1279,7 @@ export namespace Temporal {
     getPossibleInstantsFor(dateTime: Temporal.PlainDateTime | PlainDateTimeLike | string): Temporal.Instant[];
     toString(): string;
     toJSON(): string;
+    readonly [Symbol.toStringTag]: 'Temporal.TimeZone';
   }
 
   export type PlainYearMonthLike = {
@@ -1329,6 +1337,7 @@ export namespace Temporal {
     toJSON(): string;
     toString(options?: ShowCalendarOption): string;
     valueOf(): never;
+    readonly [Symbol.toStringTag]: 'Temporal.PlainYearMonth';
   }
 
   export type ZonedDateTimeLike = {
@@ -1492,6 +1501,7 @@ export namespace Temporal {
     toJSON(): string;
     toString(options?: ZonedDateTimeToStringOptions): string;
     valueOf(): never;
+    readonly [Symbol.toStringTag]: 'Temporal.ZonedDateTime';
   }
 
   /**
