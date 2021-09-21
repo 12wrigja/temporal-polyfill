@@ -1,7 +1,7 @@
 import { DEBUG } from './debug';
 import { ES } from './ecmascript';
 import { DateTimeFormat } from './intl';
-import { GetIntrinsic, MakeIntrinsicClass } from './intrinsicclass';
+import { GetIntrinsic, RegisterIntrinsicClass } from './intrinsicclass';
 
 import {
   ISO_YEAR,
@@ -65,6 +65,7 @@ function TemporalTimeToString(time, precision, options = undefined) {
 }
 
 export class PlainTime implements Temporal.PlainTime {
+  [Symbol.toStringTag]: 'Temporal.PlainTime';
   constructor(isoHour = 0, isoMinute = 0, isoSecond = 0, isoMillisecond = 0, isoMicrosecond = 0, isoNanosecond = 0) {
     isoHour = ES.ToIntegerThrowOnInfinity(isoHour);
     isoMinute = ES.ToIntegerThrowOnInfinity(isoMinute);
@@ -516,4 +517,4 @@ export class PlainTime implements Temporal.PlainTime {
   }
 }
 
-MakeIntrinsicClass(PlainTime, 'Temporal.PlainTime');
+RegisterIntrinsicClass(PlainTime);

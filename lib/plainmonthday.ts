@@ -1,12 +1,13 @@
 import { ES } from './ecmascript';
 import { DateTimeFormat } from './intl';
-import { MakeIntrinsicClass } from './intrinsicclass';
+import { RegisterIntrinsicClass } from './intrinsicclass';
 import { ISO_MONTH, ISO_DAY, ISO_YEAR, CALENDAR, TIME_ZONE, GetSlot, HasSlot } from './slots';
 import { Temporal } from '..';
 
 const ObjectCreate = Object.create;
 
 export class PlainMonthDay implements Temporal.PlainMonthDay {
+  [Symbol.toStringTag]: 'Temporal.PlainMonthDay';
   constructor(isoMonth, isoDay, calendar = ES.GetISO8601Calendar(), referenceISOYear = 1972) {
     isoMonth = ES.ToIntegerThrowOnInfinity(isoMonth);
     isoDay = ES.ToIntegerThrowOnInfinity(isoDay);
@@ -146,4 +147,4 @@ export class PlainMonthDay implements Temporal.PlainMonthDay {
   }
 }
 
-MakeIntrinsicClass(PlainMonthDay, 'Temporal.PlainMonthDay');
+RegisterIntrinsicClass(PlainMonthDay);

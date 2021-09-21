@@ -1,7 +1,7 @@
 import { DEBUG } from './debug';
 import { ES } from './ecmascript';
 import { DateTimeFormat } from './intl';
-import { GetIntrinsic, MakeIntrinsicClass } from './intrinsicclass';
+import { GetIntrinsic, RegisterIntrinsicClass } from './intrinsicclass';
 import { EPOCHNANOSECONDS, CreateSlots, GetSlot, SetSlot } from './slots';
 import { Temporal } from '..';
 
@@ -18,6 +18,7 @@ const MAX_DIFFERENCE_INCREMENTS = {
 };
 
 export class Instant implements Temporal.Instant {
+  [Symbol.toStringTag]: 'Temporal.Instant';
   constructor(epochNanoseconds) {
     // Note: if the argument is not passed, ToBigInt(undefined) will throw. This check exists only
     //       to improve the error message.
@@ -281,7 +282,7 @@ export class Instant implements Temporal.Instant {
   }
 }
 
-MakeIntrinsicClass(Instant, 'Temporal.Instant');
+RegisterIntrinsicClass(Instant);
 
 function bigIntIfAvailable(wrapper) {
   return typeof globalThis.BigInt === 'undefined' ? wrapper : wrapper.value;

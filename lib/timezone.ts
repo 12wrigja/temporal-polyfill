@@ -1,6 +1,6 @@
 import { DEBUG } from './debug';
 import { ES } from './ecmascript';
-import { GetIntrinsic, MakeIntrinsicClass, DefineIntrinsic } from './intrinsicclass';
+import { GetIntrinsic, RegisterIntrinsicClass, DefineIntrinsic } from './intrinsicclass';
 import {
   TIMEZONE_ID,
   EPOCHNANOSECONDS,
@@ -20,6 +20,7 @@ import {
 import { Temporal } from '..';
 
 export class TimeZone implements Temporal.TimeZone {
+  [Symbol.toStringTag]: 'Temporal.TimeZone';
   constructor(timeZoneIdentifier) {
     // Note: if the argument is not passed, GetCanonicalTimeZoneIdentifier(undefined) will throw.
     //       This check exists only to improve the error message.
@@ -149,5 +150,5 @@ export class TimeZone implements Temporal.TimeZone {
   }
 }
 
-MakeIntrinsicClass(TimeZone, 'Temporal.TimeZone');
+RegisterIntrinsicClass(TimeZone);
 DefineIntrinsic('Temporal.TimeZone.prototype.getOffsetNanosecondsFor', TimeZone.prototype.getOffsetNanosecondsFor);

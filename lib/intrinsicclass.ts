@@ -30,7 +30,19 @@ function defaultUtilInspectFormatter(this: any, depth, options) {
   return options.stylize(`${this[Symbol.toStringTag]} <${this}>`, 'special');
 }
 
-export function MakeIntrinsicClass(Class, name) {
+const toStringTag = Symbol.toStringTag;
+
+export type ClassWithoutIntrinsicBase<T> = Omit<T, typeof toStringTag>;
+
+type NamedConstructor = (new (...args: any[]) => {}) & {
+  prototype: {
+    [Symbol.toStringTag]: string;
+  }
+};
+
+export function RegisterIntrinsicClass<T extends NamedConstructor>(Class: T) {
+  debugger;
+  const name = Class.prototype[Symbol.toStringTag];
   Object.defineProperty(Class.prototype, Symbol.toStringTag, {
     value: name,
     writable: false,
@@ -60,6 +72,7 @@ export function MakeIntrinsicClass(Class, name) {
 
   DefineIntrinsic(name, Class);
   DefineIntrinsic(`${name}.prototype`, Class.prototype);
+  return Class;
 }
 
 export function DefineIntrinsic(name, value) {

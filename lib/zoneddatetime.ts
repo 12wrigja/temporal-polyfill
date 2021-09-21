@@ -1,6 +1,6 @@
 import { ES } from './ecmascript';
 import { DateTimeFormat } from './intl';
-import { GetIntrinsic, MakeIntrinsicClass } from './intrinsicclass';
+import { GetIntrinsic, RegisterIntrinsicClass } from './intrinsicclass';
 import {
   CALENDAR,
   EPOCHNANOSECONDS,
@@ -25,6 +25,7 @@ import bigInt from 'big-integer';
 const ArrayPrototypePush = Array.prototype.push;
 
 export class ZonedDateTime implements Temporal.ZonedDateTime {
+  [Symbol.toStringTag]: 'Temporal.ZonedDateTime';
   constructor(epochNanoseconds, timeZone, calendar = ES.GetISO8601Calendar()) {
     // Note: if the argument is not passed, ToBigInt(undefined) will throw. This check exists only
     //       to improve the error message.
@@ -773,7 +774,7 @@ export class ZonedDateTime implements Temporal.ZonedDateTime {
   }
 }
 
-MakeIntrinsicClass(ZonedDateTime, 'Temporal.ZonedDateTime');
+RegisterIntrinsicClass(ZonedDateTime);
 
 function bigIntIfAvailable(wrapper) {
   return typeof globalThis.BigInt === 'undefined' ? wrapper : wrapper.value;

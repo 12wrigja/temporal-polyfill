@@ -1,6 +1,6 @@
 import { DEBUG } from './debug';
 import { ES } from './ecmascript';
-import { GetIntrinsic, MakeIntrinsicClass, DefineIntrinsic } from './intrinsicclass';
+import { GetIntrinsic, RegisterIntrinsicClass, DefineIntrinsic } from './intrinsicclass';
 import {
   CALENDAR_ID,
   ISO_YEAR,
@@ -35,6 +35,7 @@ const ObjectKeys = Object.keys;
 const impl = {};
 
 export class Calendar implements Temporal.Calendar {
+  [Symbol.toStringTag]: 'Temporal.Calendar';
   constructor(id) {
     // Note: if the argument is not passed, IsBuiltinCalendar("undefined") will fail. This check
     //       exists only to improve the error message.
@@ -228,7 +229,7 @@ export class Calendar implements Temporal.Calendar {
   }
 }
 
-MakeIntrinsicClass(Calendar, 'Temporal.Calendar');
+RegisterIntrinsicClass(Calendar);
 DefineIntrinsic('Temporal.Calendar.from', Calendar.from);
 
 impl['iso8601'] = {

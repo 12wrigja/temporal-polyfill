@@ -1,6 +1,6 @@
 import { DEBUG } from './debug';
 import { ES } from './ecmascript';
-import { MakeIntrinsicClass } from './intrinsicclass';
+import { RegisterIntrinsicClass } from './intrinsicclass';
 import {
   YEARS,
   MONTHS,
@@ -19,6 +19,7 @@ import {
 import { Temporal } from '..';
 
 export class Duration implements Temporal.Duration {
+  [Symbol.toStringTag]: 'Temporal.Duration';
   constructor(
     years = 0,
     months = 0,
@@ -506,5 +507,4 @@ export class Duration implements Temporal.Duration {
     return ES.ComparisonResult(ns1.minus(ns2).toJSNumber());
   }
 }
-
-MakeIntrinsicClass(Duration, 'Temporal.Duration');
+RegisterIntrinsicClass(Duration);

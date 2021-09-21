@@ -1,6 +1,6 @@
 import { ES } from './ecmascript';
 import { DateTimeFormat } from './intl';
-import { GetIntrinsic, MakeIntrinsicClass } from './intrinsicclass';
+import { GetIntrinsic, RegisterIntrinsicClass } from './intrinsicclass';
 
 import {
   ISO_YEAR,
@@ -21,6 +21,7 @@ import {
 import { Temporal } from '..';
 
 export class PlainDateTime implements Temporal.PlainDateTime {
+  [Symbol.toStringTag]: 'Temporal.PlainDateTime';
   constructor(
     isoYear,
     isoMonth,
@@ -703,4 +704,4 @@ export class PlainDateTime implements Temporal.PlainDateTime {
   }
 }
 
-MakeIntrinsicClass(PlainDateTime, 'Temporal.PlainDateTime');
+RegisterIntrinsicClass(PlainDateTime);
