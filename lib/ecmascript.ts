@@ -683,7 +683,9 @@ export const ES = ObjectAssign({}, ES2020, {
     };
     return ES.ToTemporalRoundingIncrement(options, maximumIncrements[smallestUnit], false);
   },
-  ToSecondsStringPrecision: (options) => {
+  ToSecondsStringPrecision: (
+    options
+  ): { precision: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 'auto' | 'minute'; unit: string; increment: number } => {
     const smallestUnit = ES.ToSmallestTemporalUnit(options, undefined, ['year', 'month', 'week', 'day', 'hour']);
     switch (smallestUnit) {
       case 'minute':
@@ -728,7 +730,7 @@ export const ES = ObjectAssign({}, ES2020, {
         throw new RangeError(`fractionalSecondDigits must be 'auto' or 0 through 9, not ${digits}`);
     }
   },
-  ToLargestTemporalUnit: (options, fallback, disallowedStrings = [], autoValue) => {
+  ToLargestTemporalUnit: (options, fallback, disallowedStrings = [], autoValue?: any) => {
     const singular = new Map(SINGULAR_PLURAL_UNITS.filter(([, sing]) => !disallowedStrings.includes(sing)));
     const allowed = new Set(ALLOWED_UNITS);
     for (const s of disallowedStrings) {
@@ -884,7 +886,7 @@ export const ES = ObjectAssign({}, ES2020, {
     return value;
   },
   ToPartialRecord: (bag, fields, callerCast) => {
-    if (ES.Type(bag) !== 'Object') return false;
+    if (ES.Type(bag) !== 'Object') return undefined;
     let any;
     for (const property of fields) {
       const value = bag[property];
@@ -899,7 +901,7 @@ export const ES = ObjectAssign({}, ES2020, {
         }
       }
     }
-    return any ? any : false;
+    return any ? any : undefined;
   },
   PrepareTemporalFields: (bag, fields) => {
     if (ES.Type(bag) !== 'Object') return false;
@@ -1575,7 +1577,7 @@ export const ES = ObjectAssign({}, ES2020, {
     if (ES.Type(result) !== 'Object') throw new TypeError('bad return from calendar.mergeFields()');
     return result;
   },
-  CalendarDateAdd: (calendar, date, duration, options, dateAdd) => {
+  CalendarDateAdd: (calendar, date, duration, options, dateAdd?: any) => {
     if (dateAdd === undefined) {
       dateAdd = calendar.dateAdd;
     }
@@ -1706,17 +1708,17 @@ export const ES = ObjectAssign({}, ES2020, {
       throw new RangeError('irreconcilable calendars');
     }
   },
-  DateFromFields: (calendar, fields, options) => {
+  DateFromFields: (calendar, fields, options?: any) => {
     const result = calendar.dateFromFields(fields, options);
     if (!ES.IsTemporalDate(result)) throw new TypeError('invalid result');
     return result;
   },
-  YearMonthFromFields: (calendar, fields, options) => {
+  YearMonthFromFields: (calendar, fields, options?: any) => {
     const result = calendar.yearMonthFromFields(fields, options);
     if (!ES.IsTemporalYearMonth(result)) throw new TypeError('invalid result');
     return result;
   },
-  MonthDayFromFields: (calendar, fields, options) => {
+  MonthDayFromFields: (calendar, fields, options?: any) => {
     const result = calendar.monthDayFromFields(fields, options);
     if (!ES.IsTemporalMonthDay(result)) throw new TypeError('invalid result');
     return result;
@@ -2266,7 +2268,7 @@ export const ES = ObjectAssign({}, ES2020, {
     return ES.BalanceISODateTime(year, month, day, hour, minute, second, millisecond, microsecond, nanosecond);
   },
   GetIANATimeZoneNextTransition: (epochNanoseconds, id) => {
-    const uppercap = ES.SystemUTCEpochNanoSeconds() + 366 * DAYMILLIS * 1e6;
+    const uppercap = ES.SystemUTCEpochNanoSeconds().plus(366).multiply(DAYMILLIS).multiply(1e6);
     let leftNanos = epochNanoseconds;
     const leftOffsetNs = ES.GetIANATimeZoneOffsetNanoseconds(leftNanos, id);
     let rightNanos = leftNanos;
@@ -3235,7 +3237,7 @@ export const ES = ObjectAssign({}, ES2020, {
     ));
     return { years, months, weeks, days, hours, minutes, seconds, milliseconds, microseconds, nanoseconds };
   },
-  DifferenceZonedDateTime: (ns1, ns2, timeZone, calendar, largestUnit, options) => {
+  DifferenceZonedDateTime: (ns1, ns2, timeZone, calendar, largestUnit, options?: any) => {
     const nsDiff = ns2.subtract(ns1);
     if (nsDiff.isZero()) {
       return {
@@ -3566,7 +3568,7 @@ export const ES = ObjectAssign({}, ES2020, {
       nanosecond
     };
   },
-  AddZonedDateTime: (instant, timeZone, calendar, years, months, weeks, days, h, min, s, ms, µs, ns, options) => {
+  AddZonedDateTime: (instant, timeZone, calendar, years, months, weeks, days, h, min, s, ms, µs, ns, options?: any) => {
     // If only time is to be added, then use Instant math. It's not OK to fall
     // through to the date/time code below because compatible disambiguation in
     // the PlainDateTime=>Instant conversion will change the offset of any
@@ -3652,7 +3654,7 @@ export const ES = ObjectAssign({}, ES2020, {
     increment,
     unit,
     roundingMode,
-    dayLengthNs = 86400e9
+    dayLengthNs: bigInt.BigInteger | number = 86400e9
   ) => {
     let deltaDays = 0;
     ({ deltaDays, hour, minute, second, millisecond, microsecond, nanosecond } = ES.RoundTime(
@@ -3680,7 +3682,7 @@ export const ES = ObjectAssign({}, ES2020, {
     increment,
     unit,
     roundingMode,
-    dayLengthNs = 86400e9
+    dayLengthNs: bigInt.BigInteger | number = 86400e9
   ) => {
     let quantity = bigInt.zero;
     switch (unit) {
@@ -3721,6 +3723,8 @@ export const ES = ObjectAssign({}, ES2020, {
         return ES.BalanceTime(hour, minute, second, millisecond, result, 0);
       case 'nanosecond':
         return ES.BalanceTime(hour, minute, second, millisecond, microsecond, result);
+      default:
+        throw new Error(`Invalid unit ${unit}`);
     }
   },
   DaysUntil: (earlier, later) => {

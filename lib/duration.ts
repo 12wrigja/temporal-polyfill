@@ -389,7 +389,7 @@ export class Duration implements Temporal.Duration {
 
     if (options === undefined) throw new TypeError('options argument is required');
     options = ES.GetOptionsObject(options);
-    const unit = ES.ToTemporalDurationTotalUnit(options, undefined);
+    const unit = ES.ToTemporalDurationTotalUnit(options);
     if (unit === undefined) throw new RangeError('unit option is required');
     const relativeTo = ES.ToRelativeTemporalObject(options);
 
