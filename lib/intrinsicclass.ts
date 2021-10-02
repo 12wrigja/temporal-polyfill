@@ -20,13 +20,14 @@ interface StandaloneIntrinsics {
 type RegisteredStandaloneIntrinsics = { [key in keyof StandaloneIntrinsics as `%${key}%`]: StandaloneIntrinsics[key] };
 const INTRINSICS: Partial<TemporalIntrinsicRegisteredKeys & RegisteredStandaloneIntrinsics> = {};
 
+type stylizeOptions = { stylize: (value: unknown, type: 'number' | 'special') => string };
 type customFormatFunction<T> = (
   this: T,
   depth: number,
-  options: { stylize: (value: unknown, type: 'number' | 'special') => string }
+  options: stylizeOptions,
 ) => string;
 const customUtilInspectFormatters: Partial<{
-  [key in keyof TemporalIntrinsicRegistrations]: customFormatFunction<TemporalIntrinsicRegistrations[key]>;
+  [key in keyof TemporalIntrinsicRegistrations]: customFormatFunction<InstanceType<TemporalIntrinsicRegistrations[key]>>;
 }> = {
   ['Temporal.Duration'](depth, options) {
     const descr = options.stylize(`${this[Symbol.toStringTag]} <${this}>`, 'special');
@@ -44,13 +45,13 @@ const customUtilInspectFormatters: Partial<{
       'microseconds',
       'nanoseconds'
     ]) {
-      if (this[prop] !== 0) entries.push(`  ${prop}: ${options.stylize(this[prop], 'number')}`);
+      if ((this as any)[prop] !== 0) entries.push(`  ${prop}: ${options.stylize((this as any)[prop], 'number')}`);
     }
     return descr + ' {\n' + entries.join(',\n') + '\n}';
   }
 };
 
-function defaultUtilInspectFormatter(this: any, depth, options) {
+function defaultUtilInspectFormatter(this: any, depth: number, options: stylizeOptions) {
   return options.stylize(`${this[Symbol.toStringTag]} <${this}>`, 'special');
 }
 
@@ -73,13 +74,13 @@ export function MakeIntrinsicClass(
     });
   }
   for (const prop of Object.getOwnPropertyNames(Class)) {
-    const desc = Object.getOwnPropertyDescriptor(Class, prop);
+    const desc = Object.getOwnPropertyDescriptor(Class, prop)!;
     if (!desc.configurable || !desc.enumerable) continue;
     desc.enumerable = false;
     Object.defineProperty(Class, prop, desc);
   }
   for (const prop of Object.getOwnPropertyNames(Class.prototype)) {
-    const desc = Object.getOwnPropertyDescriptor(Class.prototype, prop);
+    const desc = Object.getOwnPropertyDescriptor(Class.prototype, prop)!;
     if (!desc.configurable || !desc.enumerable) continue;
     desc.enumerable = false;
     Object.defineProperty(Class.prototype, prop, desc);
@@ -96,18 +97,18 @@ type IntrinsicDefinitionKeys =
 export function DefineIntrinsic<KeyT extends keyof TemporalIntrinsicRegistrations>(
   name: KeyT,
   value: TemporalIntrinsicRegistrations[KeyT]
-);
+): void;
 export function DefineIntrinsic<KeyT extends keyof TemporalIntrinsicPrototypeRegistrations>(
   name: KeyT,
   value: TemporalIntrinsicPrototypeRegistrations[KeyT]
-);
-export function DefineIntrinsic<KeyT extends keyof StandaloneIntrinsics>(name: KeyT, value: StandaloneIntrinsics[KeyT]);
-export function DefineIntrinsic<KeyT>(name: KeyT, value: never);
-export function DefineIntrinsic<KeyT extends IntrinsicDefinitionKeys>(name: KeyT, value: unknown) {
+): void;
+export function DefineIntrinsic<KeyT extends keyof StandaloneIntrinsics>(name: KeyT, value: StandaloneIntrinsics[KeyT]): void;
+export function DefineIntrinsic<KeyT>(name: KeyT, value: never): void;
+export function DefineIntrinsic<KeyT extends IntrinsicDefinitionKeys>(name: KeyT, value: unknown): void {
   const key = `%${name}%`;
-  if (INTRINSICS[key] !== undefined) throw new Error(`intrinsic ${name} already exists`);
-  INTRINSICS[key] = value;
+  if ((INTRINSICS as any)[key] !== undefined) throw new Error(`intrinsic ${name} already exists`);
+  (INTRINSICS as any)[key] = value;
 }
-export function GetIntrinsic<KeyT extends keyof typeof INTRINSICS>(intrinsic: KeyT): typeof INTRINSICS[KeyT] {
-  return INTRINSICS[intrinsic];
+export function GetIntrinsic<KeyT extends keyof typeof INTRINSICS>(intrinsic: KeyT): NonNullable<typeof INTRINSICS[KeyT]> {
+  return INTRINSICS[intrinsic]!;
 }

@@ -54,6 +54,10 @@ import {
   NANOSECONDS
 } from './slots';
 import { IsBuiltinCalendar } from './calendar';
+import {Temporal} from '..';
+
+import * as PARSE from './regex';
+
 const DAY_SECONDS = 86400;
 const DAY_NANOS = bigInt(DAY_SECONDS).multiply(1e9);
 const NS_MIN = bigInt(-DAY_SECONDS).multiply(1e17);
@@ -189,8 +193,6 @@ const SINGULAR_PLURAL_UNITS = [
   ['microseconds', 'microsecond'],
   ['nanoseconds', 'nanosecond']
 ] as const;
-
-import * as PARSE from './regex';
 
 const IntlDateTimeFormatEnUsCache = new Map();
 
@@ -1702,7 +1704,7 @@ export function CalendarInLeapYear(calendar, dateLike) {
   return calendar.inLeapYear(dateLike);
 }
 
-export function ToTemporalCalendar(calendarLike) {
+export function ToTemporalCalendar(calendarLike: string|Temporal.Calendar|Temporal.CalendarProtocol): Temporal.Calendar {
   if (Type(calendarLike) === 'Object') {
     if (HasSlot(calendarLike, CALENDAR)) return GetSlot(calendarLike, CALENDAR);
     if (!('calendar' in calendarLike)) return calendarLike;
