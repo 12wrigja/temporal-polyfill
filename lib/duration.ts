@@ -17,6 +17,7 @@ import {
   SetSlot
 } from './slots';
 import { Temporal } from '..';
+import JSBI from 'jsbi';
 
 export class Duration implements Temporal.Duration {
   constructor(
@@ -265,7 +266,7 @@ export class Duration implements Temporal.Duration {
     ));
     return new Duration(years, months, weeks, days, hours, minutes, seconds, milliseconds, microseconds, nanoseconds);
   }
-  round(options) {
+  round(options: Temporal.DurationRoundOptions) {
     if (!ES.IsTemporalDuration(this)) throw new TypeError('invalid receiver');
     if (options === undefined) throw new TypeError('options parameter is required');
     let years = GetSlot(this, YEARS);
@@ -291,28 +292,30 @@ export class Duration implements Temporal.Duration {
       microseconds,
       nanoseconds
     );
-    options = ES.GetOptionsObject(options);
-    let smallestUnit = ES.ToSmallestTemporalUnit(options, undefined);
+    let roundOpts = ES.GetOptionsObject(options);
+    let smallestUnit = ES.ToSmallestTemporalUnit(roundOpts, undefined);
     let smallestUnitPresent = true;
     if (!smallestUnit) {
       smallestUnitPresent = false;
       smallestUnit = 'nanosecond';
     }
     defaultLargestUnit = ES.LargerOfTwoTemporalUnits(defaultLargestUnit, smallestUnit);
-    let largestUnit = ES.ToLargestTemporalUnit(options, undefined);
+    let largestUnit = ES.ToLargestTemporalUnit(roundOpts, undefined);
     let largestUnitPresent = true;
     if (!largestUnit) {
       largestUnitPresent = false;
       largestUnit = defaultLargestUnit;
     }
-    if (largestUnit === 'auto') largestUnit = defaultLargestUnit;
+    // TODO: where does 'auto' come from here? Is that only from users, or do
+    // one of the many Unit manipulation functions add it in?
+    if ((largestUnit as any) === 'auto') largestUnit = defaultLargestUnit;
     if (!smallestUnitPresent && !largestUnitPresent) {
       throw new RangeError('at least one of smallestUnit or largestUnit is required');
     }
     ES.ValidateTemporalUnitRange(largestUnit, smallestUnit);
-    const roundingMode = ES.ToTemporalRoundingMode(options, 'halfExpand');
-    const roundingIncrement = ES.ToTemporalDateTimeRoundingIncrement(options, smallestUnit);
-    let relativeTo = ES.ToRelativeTemporalObject(options);
+    const roundingMode = ES.ToTemporalRoundingMode(roundOpts, 'halfExpand');
+    const roundingIncrement = ES.ToTemporalDateTimeRoundingIncrement(roundOpts, smallestUnit);
+    let relativeTo = ES.ToRelativeTemporalObject(roundOpts);
 
     ({ years, months, weeks, days } = ES.UnbalanceDurationRelative(
       years,
@@ -408,7 +411,7 @@ export class Duration implements Temporal.Duration {
       milliseconds,
       microseconds,
       nanoseconds,
-      unit,
+      unit as any,
       intermediate
     ));
     // Finally, truncate to the correct unit and calculate remainder
@@ -430,7 +433,7 @@ export class Duration implements Temporal.Duration {
     );
     return total;
   }
-  toString(options = undefined) {
+  toString(options: Temporal.ToStringPrecisionOptions = undefined) {
     if (!ES.IsTemporalDuration(this)) throw new TypeError('invalid receiver');
     options = ES.GetOptionsObject(options);
     const { precision, unit, increment } = ES.ToSecondsStringPrecision(options);
@@ -501,9 +504,9 @@ export class Duration implements Temporal.Duration {
       ({ days: d1 } = ES.UnbalanceDurationRelative(y1, mon1, w1, d1, 'day', relativeTo));
       ({ days: d2 } = ES.UnbalanceDurationRelative(y2, mon2, w2, d2, 'day', relativeTo));
     }
-    ns1 = ES.TotalDurationNanoseconds(d1, h1, min1, s1, ms1, µs1, ns1, shift1);
-    ns2 = ES.TotalDurationNanoseconds(d2, h2, min2, s2, ms2, µs2, ns2, shift2);
-    return ES.ComparisonResult(ns1.minus(ns2).toJSNumber());
+    const durationNanoseconds1 = ES.TotalDurationNanoseconds(d1, h1, min1, s1, ms1, µs1, ns1, shift1);
+    const durationNanoseconds2 = ES.TotalDurationNanoseconds(d2, h2, min2, s2, ms2, µs2, ns2, shift2);
+    return ES.ComparisonResult(JSBI.toNumber(JSBI.subtract(durationNanoseconds1, durationNanoseconds2)));
   }
   [Symbol.toStringTag]!: 'Temporal.Duration';
 }

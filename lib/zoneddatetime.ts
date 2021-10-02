@@ -99,17 +99,17 @@ export class ZonedDateTime implements Temporal.ZonedDateTime {
   get epochSeconds() {
     if (!ES.IsTemporalZonedDateTime(this)) throw new TypeError('invalid receiver');
     const value = GetSlot(this, EPOCHNANOSECONDS);
-    return +value.divide(1e9);
+    return JSBI.toNumber(JSBI.divide(value, JSBI.BigInt(1e9)));
   }
   get epochMilliseconds() {
     if (!ES.IsTemporalZonedDateTime(this)) throw new TypeError('invalid receiver');
     const value = GetSlot(this, EPOCHNANOSECONDS);
-    return +value.divide(1e6);
+    return JSBI.toNumber(JSBI.divide(value, JSBI.BigInt(1e6)));
   }
   get epochMicroseconds() {
     if (!ES.IsTemporalZonedDateTime(this)) throw new TypeError('invalid receiver');
     const value = GetSlot(this, EPOCHNANOSECONDS);
-    return ES.ToBigIntExternal(value.divide(1e3));
+    return ES.ToBigIntExternal(JSBI.divide(value, JSBI.BigInt(1e3)));
   }
   get epochNanoseconds() {
     if (!ES.IsTemporalZonedDateTime(this)) throw new TypeError('invalid receiver');
@@ -140,7 +140,7 @@ export class ZonedDateTime implements Temporal.ZonedDateTime {
     const timeZone = GetSlot(this, TIME_ZONE);
     const todayNs = GetSlot(ES.BuiltinTimeZoneGetInstantFor(timeZone, today, 'compatible'), EPOCHNANOSECONDS);
     const tomorrowNs = GetSlot(ES.BuiltinTimeZoneGetInstantFor(timeZone, tomorrow, 'compatible'), EPOCHNANOSECONDS);
-    return tomorrowNs.subtract(todayNs).toJSNumber() / 3.6e12;
+    return JSBI.toNumber(JSBI.subtract(tomorrowNs, todayNs)) / 3.6e12;
   }
   get daysInWeek() {
     if (!ES.IsTemporalZonedDateTime(this)) throw new TypeError('invalid receiver');
@@ -394,7 +394,7 @@ export class ZonedDateTime implements Temporal.ZonedDateTime {
         ns1,
         ns2,
         roundingIncrement,
-        smallestUnit,
+        smallestUnit as any,
         roundingMode
       ));
       ({ hours, minutes, seconds, milliseconds, microseconds, nanoseconds } = ES.BalanceDuration(
@@ -489,7 +489,7 @@ export class ZonedDateTime implements Temporal.ZonedDateTime {
         ns1,
         ns2,
         roundingIncrement,
-        smallestUnit,
+        smallestUnit as any,
         roundingMode
       ));
       ({ hours, minutes, seconds, milliseconds, microseconds, nanoseconds } = ES.BalanceDuration(

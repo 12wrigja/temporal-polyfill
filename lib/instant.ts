@@ -6,7 +6,7 @@ import { EPOCHNANOSECONDS, CreateSlots, GetSlot, SetSlot } from './slots';
 import { Temporal } from '..';
 import JSBI from 'jsbi';
 
-const DISALLOWED_UNITS = ['year', 'month', 'week', 'day'];
+const DISALLOWED_UNITS = ['year', 'month', 'week', 'day'] as const;
 const MAX_DIFFERENCE_INCREMENTS = {
   hour: 24,
   minute: 60,
@@ -43,7 +43,7 @@ export class Instant implements Temporal.Instant {
   get epochSeconds() {
     if (!ES.IsTemporalInstant(this)) throw new TypeError('invalid receiver');
     const value = GetSlot(this, EPOCHNANOSECONDS);
-    return +value.divide(1e9);
+    return JSBI.toNumber(JSBI.divide(value, JSBI.BigInt(1e9)));
   }
   get epochMilliseconds() {
     if (!ES.IsTemporalInstant(this)) throw new TypeError('invalid receiver');
@@ -110,7 +110,8 @@ export class Instant implements Temporal.Instant {
       onens,
       twons,
       roundingIncrement,
-      smallestUnit,
+      // TODO: ToSmallestTemporalUnit typing doesn't narrow properly.
+      smallestUnit as any,
       roundingMode
     );
     let hours, minutes;
@@ -143,7 +144,8 @@ export class Instant implements Temporal.Instant {
       onens,
       twons,
       roundingIncrement,
-      smallestUnit,
+      // TODO: ToSmallestTemporalUnit typing doesn't narrow properly.
+      smallestUnit as any,
       roundingMode
     );
     let hours, minutes;
@@ -177,7 +179,11 @@ export class Instant implements Temporal.Instant {
     };
     const roundingIncrement = ES.ToTemporalRoundingIncrement(options, maximumIncrements[smallestUnit], true);
     const ns = GetSlot(this, EPOCHNANOSECONDS);
-    const roundedNs = ES.RoundInstant(ns, roundingIncrement, smallestUnit, roundingMode);
+    const roundedNs = ES.RoundInstant(ns,
+      roundingIncrement,
+      // TODO: ToSmallestTemporalUnit typing doesn't narrow properly.
+      smallestUnit as any,
+      roundingMode);
     return new Instant(roundedNs);
   }
   equals(other) {

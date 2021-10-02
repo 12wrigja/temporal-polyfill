@@ -6,7 +6,7 @@ import { Temporal } from '..';
 
 const ObjectCreate = Object.create;
 
-const DISALLOWED_UNITS = ['week', 'day', 'hour', 'minute', 'second', 'millisecond', 'microsecond', 'nanosecond'];
+const DISALLOWED_UNITS = ['week', 'day', 'hour', 'minute', 'second', 'millisecond', 'microsecond', 'nanosecond'] as const;
 
 export class PlainYearMonth implements Temporal.PlainYearMonth {
   constructor(isoYear, isoMonth, calendar = ES.GetISO8601Calendar(), referenceISODay = 1) {
@@ -273,7 +273,7 @@ export class PlainYearMonth implements Temporal.PlainYearMonth {
   equals(other) {
     if (!ES.IsTemporalYearMonth(this)) throw new TypeError('invalid receiver');
     other = ES.ToTemporalYearMonth(other);
-    for (const slot of [ISO_YEAR, ISO_MONTH, ISO_DAY]) {
+    for (const slot of [ISO_YEAR, ISO_MONTH, ISO_DAY] as const) {
       const val1 = GetSlot(this, slot);
       const val2 = GetSlot(other, slot);
       if (val1 !== val2) return false;

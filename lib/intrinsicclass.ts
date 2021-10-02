@@ -31,7 +31,7 @@ const customUtilInspectFormatters: Partial<{
   ['Temporal.Duration'](depth, options) {
     const descr = options.stylize(`${this[Symbol.toStringTag]} <${this}>`, 'special');
     if (depth < 1) return descr;
-    const entries = [];
+    const entries: string[] = [];
     for (const prop of [
       'years',
       'months',
@@ -73,13 +73,13 @@ export function MakeIntrinsicClass(
     });
   }
   for (const prop of Object.getOwnPropertyNames(Class)) {
-    const desc = Object.getOwnPropertyDescriptor(Class, prop);
+    const desc = Object.getOwnPropertyDescriptor(Class, prop)!;
     if (!desc.configurable || !desc.enumerable) continue;
     desc.enumerable = false;
     Object.defineProperty(Class, prop, desc);
   }
   for (const prop of Object.getOwnPropertyNames(Class.prototype)) {
-    const desc = Object.getOwnPropertyDescriptor(Class.prototype, prop);
+    const desc = Object.getOwnPropertyDescriptor(Class.prototype, prop)!;
     if (!desc.configurable || !desc.enumerable) continue;
     desc.enumerable = false;
     Object.defineProperty(Class.prototype, prop, desc);
@@ -108,6 +108,7 @@ export function DefineIntrinsic<KeyT extends IntrinsicDefinitionKeys>(name: KeyT
   if (INTRINSICS[key] !== undefined) throw new Error(`intrinsic ${name} already exists`);
   INTRINSICS[key] = value;
 }
-export function GetIntrinsic<KeyT extends keyof typeof INTRINSICS>(intrinsic: KeyT): typeof INTRINSICS[KeyT] {
-  return INTRINSICS[intrinsic];
+export function GetIntrinsic<KeyT extends keyof typeof INTRINSICS>(intrinsic: KeyT): NonNullable<typeof INTRINSICS[KeyT]> {
+  // Assume this has already been registered by a call to DefineIntrinsic.
+  return (INTRINSICS[intrinsic] as any)!;
 }
