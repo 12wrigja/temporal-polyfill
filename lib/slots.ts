@@ -87,7 +87,7 @@ interface Slots {
 }
 
 const slots = new WeakMap();
-export function CreateSlots(container): void {
+export function CreateSlots(container) {
   slots.set(container, Object.create(null));
 }
 function GetSlots(container) {
