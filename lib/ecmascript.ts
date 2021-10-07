@@ -3990,7 +3990,7 @@ export function AdjustRoundedDurationDays(
   );
   const dayLengthNs = JSBI.subtract(dayEnd, dayStart);
 
-  if (JSBI.greaterThan(JSBI.multiply(JSBI.subtract(timeRemainderNs, dayLengthNs), JSBI.BigInt(direction)), ZERO)) {
+  if (JSBI.greaterThanOrEqual(JSBI.multiply(JSBI.subtract(timeRemainderNs, dayLengthNs), JSBI.BigInt(direction)), ZERO)) {
     ({ years, months, weeks, days } = AddDuration(
       years,
       months,
