@@ -1,5 +1,5 @@
 import commonjs from '@rollup/plugin-commonjs';
-import {nodeResolve} from '@rollup/plugin-node-resolve';
+import { nodeResolve } from '@rollup/plugin-node-resolve';
 import babel from '@rollup/plugin-babel';
 import replace from '@rollup/plugin-replace';
 import { terser } from 'rollup-plugin-terser';
@@ -11,15 +11,17 @@ const isTest262Build = !!env.TEST262;
 const isProduction = env.NODE_ENV === 'production' && !isTest262Build;
 const libName = 'temporal';
 
-function withPlugins(options = {
-  babelConfig: undefined,
-  optimize: false,
-  debugBuild: true,
-}) {
+function withPlugins(
+  options = {
+    babelConfig: undefined,
+    optimize: false,
+    debugBuild: true
+  }
+) {
   const basePlugins = [
     replace({ exclude: 'node_modules/**', 'globalThis.__debug__': options.debugBuild, preventAssignment: true }),
     commonjs(),
-    nodeResolve({ preferBuiltins: false }),
+    nodeResolve({ preferBuiltins: false })
   ];
   if (options.babelConfig) {
     basePlugins.push(babel(options.babelConfig));
@@ -75,8 +77,8 @@ if (isTest262Build) {
       },
       plugins: withPlugins({
         debugBuild: false, // Test262 tests don't pass in debug builds
-        babelConfig: es5BundleBabelConfig,
-      }),
+        babelConfig: es5BundleBabelConfig
+      })
     }
   ];
 } else if (isPlaygroundBuild) {
@@ -91,7 +93,7 @@ if (isTest262Build) {
         sourcemap: true
       },
       plugins: withPlugins({
-        debugBuild: true,
+        debugBuild: true
       })
     }
   ];
@@ -115,8 +117,10 @@ if (isTest262Build) {
     ],
     plugins: withPlugins({
       debugBuild: !isProduction,
-      optimize: isProduction,
-      // Here is where we could insert the JSBI -> native BigInt plugin if we could find a way to provide a separate bundle for modern browsers that can use native BigInt.
+      optimize: isProduction
+      // Here is where we could insert the JSBI -> native BigInt plugin if we
+      // could find a way to provide a separate bundle for modern browsers
+      // that can use native BigInt.
       // Maybe use node's exports + a user-defined condition?
       // https://nodejs.org/api/packages.html#resolving-user-conditions
     })
@@ -133,14 +137,10 @@ if (isTest262Build) {
     plugins: withPlugins({
       debugBuild: !isProduction,
       optimize: isProduction,
-      babelConfig: es5BundleBabelConfig,
+      babelConfig: es5BundleBabelConfig
     })
   };
-  builds = [
-    modernBuildDef,
-    legacyUMDBuildDef
-  ];
+  builds = [modernBuildDef, legacyUMDBuildDef];
 }
-
 
 export default builds;
