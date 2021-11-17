@@ -77,7 +77,6 @@ if (isTest262Build) {
       },
       plugins: withPlugins({
         debugBuild: false, // Test262 tests don't pass in debug builds
-        babelConfig: es5BundleBabelConfig
       })
     }
   ];
