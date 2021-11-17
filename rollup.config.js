@@ -76,7 +76,7 @@ if (isTest262Build) {
         sourcemap: true
       },
       plugins: withPlugins({
-        debugBuild: false, // Test262 tests don't pass in debug builds
+        debugBuild: false // Test262 tests don't pass in debug builds
       })
     }
   ];
