@@ -931,183 +931,40 @@ interface TemporalUnitOptionsBag {
   unit?: Temporal.PluralUnit<Temporal.DateTimeUnit> | Temporal.DateTimeUnit | 'auto';
 }
 type UnitOptionsBagKeys = keyof TemporalUnitOptionsBag;
-type Unfold<T extends ReadonlyArray<any> | undefined> = T extends undefined ? never : Exclude<T, undefined>[number];
-type ExtraValuesArray = ReadonlyArray<Temporal.DateTimeUnit | 'auto'> | undefined;
+type UnitTypeMapping = {
+  'date': Temporal.DateUnit,
+  'time': Temporal.TimeUnit,
+  'datetime': Temporal.DateTimeUnit,
+};
 
-export function GetTemporalUnit(
+export function GetTemporalUnit<T extends keyof UnitTypeMapping, D extends typeof REQUIRED | UnitTypeMapping[T] | 'auto' | undefined, R extends Exclude<D, typeof REQUIRED>|UnitTypeMapping[T]>(
   options: TemporalUnitOptionsBag,
   key: UnitOptionsBagKeys,
-  unitGroup: 'date',
-  requiredOrDefault: typeof REQUIRED
-): Temporal.DateUnit;
-export function GetTemporalUnit(
+  unitGroup: T,
+  requiredOrDefault: D
+): R;
+export function GetTemporalUnit<T extends keyof UnitTypeMapping, D extends typeof REQUIRED | UnitTypeMapping[T] | 'auto' | undefined, E extends "auto" | Temporal.DateTimeUnit, R extends UnitTypeMapping[T]|Exclude<D, typeof REQUIRED>|E>(
   options: TemporalUnitOptionsBag,
   key: UnitOptionsBagKeys,
-  unitGroup: 'date',
-  requiredOrDefault: 'auto'
-): Temporal.DateUnit | 'auto';
-export function GetTemporalUnit(
+  unitGroup: T,
+  requiredOrDefault: D,
+  extraValues: ReadonlyArray<E>
+): R;
+export function GetTemporalUnit<T extends keyof UnitTypeMapping, D extends typeof REQUIRED | UnitTypeMapping[T] | 'auto' | undefined, E extends "auto" | Temporal.DateTimeUnit, R extends UnitTypeMapping[T]|Exclude<D, typeof REQUIRED>|E>(
   options: TemporalUnitOptionsBag,
   key: UnitOptionsBagKeys,
-  unitGroup: 'date',
-  requiredOrDefault: undefined
-): Temporal.DateUnit | undefined;
-export function GetTemporalUnit(
-  options: TemporalUnitOptionsBag,
-  key: UnitOptionsBagKeys,
-  unitGroup: 'date',
-  requiredOrDefault: Temporal.DateUnit
-): Temporal.DateUnit;
-export function GetTemporalUnit<E extends ExtraValuesArray>(
-  options: TemporalUnitOptionsBag,
-  key: UnitOptionsBagKeys,
-  unitGroup: 'date',
-  requiredOrDefault: typeof REQUIRED,
-  extraValues: E
-): Temporal.DateUnit | Unfold<E>;
-export function GetTemporalUnit<E extends ExtraValuesArray>(
-  options: TemporalUnitOptionsBag,
-  key: UnitOptionsBagKeys,
-  unitGroup: 'date',
-  requiredOrDefault: 'auto',
-  extraValues: E
-): Temporal.DateUnit | 'auto' | Unfold<E>;
-export function GetTemporalUnit<E extends ExtraValuesArray>(
-  options: TemporalUnitOptionsBag,
-  key: UnitOptionsBagKeys,
-  unitGroup: 'date',
-  requiredOrDefault: Temporal.DateUnit,
-  extraValues: E
-): Temporal.DateUnit | Unfold<E>;
-export function GetTemporalUnit<E extends ExtraValuesArray>(
-  options: TemporalUnitOptionsBag,
-  key: UnitOptionsBagKeys,
-  unitGroup: 'date',
-  requiredOrDefault: Temporal.DateUnit | 'auto' | undefined,
-  extraValues?: E
-): Temporal.DateUnit | 'auto' | undefined | Unfold<E>;
-
-export function GetTemporalUnit(
-  options: TemporalUnitOptionsBag,
-  key: UnitOptionsBagKeys,
-  unitGroup: 'time',
-  requiredOrDefault: typeof REQUIRED
-): Temporal.TimeUnit;
-export function GetTemporalUnit(
-  options: TemporalUnitOptionsBag,
-  key: UnitOptionsBagKeys,
-  unitGroup: 'time',
-  requiredOrDefault: 'auto'
-): Temporal.TimeUnit | 'auto';
-export function GetTemporalUnit(
-  options: TemporalUnitOptionsBag,
-  key: UnitOptionsBagKeys,
-  unitGroup: 'time',
-  requiredOrDefault: undefined
-): Temporal.TimeUnit | undefined;
-export function GetTemporalUnit(
-  options: TemporalUnitOptionsBag,
-  key: UnitOptionsBagKeys,
-  unitGroup: 'time',
-  requiredOrDefault: Temporal.TimeUnit
-): Temporal.TimeUnit;
-export function GetTemporalUnit<E extends ExtraValuesArray>(
-  options: TemporalUnitOptionsBag,
-  key: UnitOptionsBagKeys,
-  unitGroup: 'time',
-  requiredOrDefault: typeof REQUIRED,
-  extraValues: E
-): Temporal.TimeUnit | Unfold<E>;
-export function GetTemporalUnit<E extends ExtraValuesArray>(
-  options: TemporalUnitOptionsBag,
-  key: UnitOptionsBagKeys,
-  unitGroup: 'time',
-  requiredOrDefault: 'auto',
-  extraValues: E
-): Temporal.TimeUnit | 'auto' | Unfold<E>;
-export function GetTemporalUnit<E extends ExtraValuesArray>(
-  options: TemporalUnitOptionsBag,
-  key: UnitOptionsBagKeys,
-  unitGroup: 'time',
-  requiredOrDefault: Temporal.TimeUnit,
-  extraValues: E
-): Temporal.TimeUnit | Unfold<E>;
-export function GetTemporalUnit<E extends ExtraValuesArray>(
-  options: TemporalUnitOptionsBag,
-  key: UnitOptionsBagKeys,
-  unitGroup: 'time',
-  requiredOrDefault: Temporal.TimeUnit | 'auto' | undefined,
-  extraValues?: E
-): Temporal.TimeUnit | 'auto' | undefined | Unfold<E>;
-
-export function GetTemporalUnit(
-  options: TemporalUnitOptionsBag,
-  key: UnitOptionsBagKeys,
-  unitGroup: 'datetime',
-  requiredOrDefault: typeof REQUIRED
-): Temporal.DateTimeUnit;
-export function GetTemporalUnit(
-  options: TemporalUnitOptionsBag,
-  key: UnitOptionsBagKeys,
-  unitGroup: 'datetime',
-  requiredOrDefault: 'auto'
-): Temporal.DateTimeUnit | 'auto';
-export function GetTemporalUnit(
-  options: TemporalUnitOptionsBag,
-  key: UnitOptionsBagKeys,
-  unitGroup: 'datetime',
-  requiredOrDefault: undefined
-): Temporal.DateTimeUnit | undefined;
-export function GetTemporalUnit(
-  options: TemporalUnitOptionsBag,
-  key: UnitOptionsBagKeys,
-  unitGroup: 'datetime',
-  requiredOrDefault: Temporal.DateTimeUnit
-): Temporal.DateTimeUnit;
-export function GetTemporalUnit<E extends ExtraValuesArray>(
-  options: TemporalUnitOptionsBag,
-  key: UnitOptionsBagKeys,
-  unitGroup: 'datetime',
-  requiredOrDefault: typeof REQUIRED,
-  extraValues: E
-): Temporal.DateTimeUnit | Unfold<E>;
-export function GetTemporalUnit<E extends ExtraValuesArray>(
-  options: TemporalUnitOptionsBag,
-  key: UnitOptionsBagKeys,
-  unitGroup: 'datetime',
-  requiredOrDefault: 'auto',
-  extraValues: E
-): Temporal.DateTimeUnit | 'auto' | Unfold<E>;
-export function GetTemporalUnit<E extends ExtraValuesArray>(
-  options: TemporalUnitOptionsBag,
-  key: UnitOptionsBagKeys,
-  unitGroup: 'datetime',
-  requiredOrDefault: Temporal.DateTimeUnit,
-  extraValues: E
-): Temporal.DateTimeUnit | Unfold<E>;
-export function GetTemporalUnit<E extends ExtraValuesArray>(
-  options: TemporalUnitOptionsBag,
-  key: UnitOptionsBagKeys,
-  unitGroup: 'datetime',
-  requiredOrDefault: Temporal.DateTimeUnit | 'auto' | undefined,
-  extraValues?: E
-): Temporal.DateTimeUnit | 'auto' | undefined | Unfold<E>;
-
-export function GetTemporalUnit(
-  options: TemporalUnitOptionsBag,
-  key: UnitOptionsBagKeys,
-  unitGroup: 'date' | 'time' | 'datetime',
-  requiredOrDefault: typeof REQUIRED | Temporal.DateTimeUnit | 'auto' | undefined,
-  extraValues: ExtraValuesArray = []
-): Temporal.DateTimeUnit | undefined | 'auto' | Unfold<typeof extraValues> {
-  const allowedSingular: Array<Temporal.DateTimeUnit | 'auto'> = [];
+  unitGroup: T,
+  requiredOrDefault: D,
+  extraValues: ReadonlyArray<E>|never[] = []
+): R {
+  const allowedSingular: Array<Temporal.DateTimeUnit|'auto'> = [];
   for (const [, singular, category] of SINGULAR_PLURAL_UNITS) {
     if (unitGroup === 'datetime' || unitGroup === category) {
       allowedSingular.push(singular);
     }
   }
   allowedSingular.push(...extraValues);
-  let defaultVal = requiredOrDefault;
+  let defaultVal: typeof REQUIRED | Temporal.DateTimeUnit | 'auto' | undefined = requiredOrDefault;
   if (defaultVal === REQUIRED) {
     defaultVal = undefined;
   } else if (defaultVal !== undefined) {
@@ -1128,88 +985,10 @@ export function GetTemporalUnit(
   if (SINGULAR_FOR.has(retval as Temporal.PluralUnit<Temporal.DateTimeUnit>)) {
     // We just has-checked this, but tsc doesn't understand that.
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return SINGULAR_FOR.get(retval as Temporal.PluralUnit<Temporal.DateTimeUnit>)!;
+    return SINGULAR_FOR.get(retval as Temporal.PluralUnit<Temporal.DateTimeUnit>)! as R;
   }
-  return retval as Exclude<typeof retval, Temporal.PluralUnit<Temporal.DateTimeUnit> | 'auto'>;
+  return retval as R;
 }
-
-// export function ToLargestTemporalUnit<Allowed extends Temporal.DateTimeUnit>(
-//   options: { largestUnit?: Temporal.LargestUnit<Allowed> },
-//   fallback: undefined
-// ): ToSingularUnit<Allowed> | 'auto' | undefined;
-// export function ToLargestTemporalUnit<
-//   Allowed extends Temporal.LargestUnit<Temporal.DateTimeUnit>,
-//   Disallowed extends Temporal.DateTimeUnit
-// >(
-//   options: { largestUnit?: Allowed | undefined },
-//   fallback: 'auto',
-//   disallowedStrings: ReadonlyArray<Disallowed>,
-//   autoValue: ToSingularUnit<Allowed>
-// ): ToSingularUnit<Allowed>;
-// export function ToLargestTemporalUnit<
-//   Allowed extends Temporal.DateTimeUnit,
-//   Disallowed extends ToSingularUnit<Exclude<Temporal.DateTimeUnit, Allowed>>,
-//   Fallback extends ToSingularUnit<Allowed> | 'auto' | undefined
-// >(
-//   options: { largestUnit?: Temporal.LargestUnit<Allowed> },
-//   fallback: Fallback,
-//   disallowedStrings: ReadonlyArray<Disallowed> = [],
-//   autoValue?: Exclude<ToSingularUnit<Allowed>, 'auto'> | undefined
-// ): ToSingularUnit<Allowed> | (Fallback extends undefined ? undefined : 'auto') {
-//   type Ret = ToSingularUnit<Allowed> | (Fallback extends undefined ? undefined : 'auto');
-//   const singular = new Map(
-//     SINGULAR_PLURAL_UNITS.filter(([, sing]) => !disallowedStrings.includes(sing as Disallowed))
-//   ) as Map<Temporal.PluralUnit<Allowed>, Allowed>;
-//   const allowed = new Set(ALLOWED_UNITS) as Set<Allowed>;
-//   for (const s of disallowedStrings) {
-//     allowed.delete(s as unknown as Allowed);
-//   }
-//   const retval = GetOption(options, 'largestUnit', ['auto', ...allowed, ...singular.keys()], fallback);
-//   if (retval === 'auto' && autoValue !== undefined) return autoValue;
-//   if (singular.has(retval as Temporal.PluralUnit<Allowed>)) {
-//     return singular.get(retval as Temporal.PluralUnit<Allowed>) as Ret;
-//   }
-//   return retval as Ret;
-// }
-
-// export function ToSmallestTemporalUnit<
-//   Allowed extends Temporal.SmallestUnit<Temporal.DateTimeUnit>,
-//   Fallback extends ToSingularUnit<Allowed> | undefined,
-//   Disallowed extends ToSingularUnit<Exclude<Temporal.DateTimeUnit, Allowed>>
-// >(
-//   options: { smallestUnit?: Allowed | undefined },
-//   fallback: Fallback,
-//   disallowedStrings: ReadonlyArray<Disallowed> = []
-// ): ToSingularUnit<Allowed> | (Fallback extends undefined ? undefined : never) {
-//   type Ret = ToSingularUnit<Allowed> | (Fallback extends undefined ? undefined : never);
-//   const singular = new Map(
-//     SINGULAR_PLURAL_UNITS.filter(([, sing]) => !disallowedStrings.includes(sing as Disallowed))
-//   ) as Map<Allowed, ToSingularUnit<Allowed>>;
-//   const allowed = new Set(ALLOWED_UNITS) as Set<Allowed>;
-//   for (const s of disallowedStrings) {
-//     allowed.delete(s as unknown as Allowed);
-//   }
-//   const value = GetOption(options, 'smallestUnit', [...allowed, ...singular.keys()], fallback);
-//   if (singular.has(value as Allowed)) {
-//     return singular.get(value as Allowed) as Ret;
-//   }
-//   return value as Ret;
-// }
-
-// export function ToTemporalDurationTotalUnit(options: {
-//   unit: Temporal.DateTimeUnit | Temporal.PluralUnit<Temporal.DateTimeUnit>;
-// }) {
-//   // This AO is identical to ToSmallestTemporalUnit, except:
-//   // - default is always `undefined` (caller will throw if omitted)
-//   // - option is named `unit` (not `smallestUnit`)
-//   // - all units are valid (no `disallowedStrings`)
-//   const singular = new Map(SINGULAR_PLURAL_UNITS);
-//   const value = GetOption(options, 'unit', [...singular.values(), ...singular.keys()], undefined);
-//   if (singular.has(value as Temporal.PluralUnit<Temporal.DateTimeUnit>)) {
-//     return singular.get(value as Temporal.PluralUnit<Temporal.DateTimeUnit>);
-//   }
-//   return value as Temporal.DateTimeUnit;
-// }
 
 export function ToRelativeTemporalObject(options: {
   relativeTo?:
