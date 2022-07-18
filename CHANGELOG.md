@@ -1,6 +1,15 @@
+# 0.4.2
+
+This version is a patch version enabling TypeScript Node16 support for this
+package.
+
+Bug Fixes:
+
+- Add types to exports/./import to support Typescript Node16
+
 # 0.4.1
 
-This version is a patch version enabling polyfill compatibilit with Safari
+This version is a patch version enabling polyfill compatibility with Safari
 versions <15.1 (October 2021 and earlier).
 
 Bug fixes:
