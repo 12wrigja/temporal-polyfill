@@ -5,7 +5,7 @@ set -e
 TESTS_FROM_ENV="$TESTS"
 TESTS="*/Temporal/**/*.js"
 if [ $# -ne 0 ]; then
-  TESTS="*/Temporal/$@";
+  TESTS="*$@";
 elif [ ! -z "$TESTS_FROM_ENV" ]; then
   # VSCode launch.json passes the full path to the current file in some cases,
   # so pass that on.
