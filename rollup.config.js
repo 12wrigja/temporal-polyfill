@@ -33,6 +33,7 @@ function withPlugins(
     sourcemaps()
   ];
   if (options.babelConfig) {
+    // TODO the babel config here is messing up sourcemaps according to the validator.
     if (!options.babelConfig.inputSourceMap) {
       options.babelConfig.inputSourceMap = true;
     }
@@ -41,6 +42,7 @@ function withPlugins(
   if (options.optimize) {
     basePlugins.push(
       terser({
+        sourceMap: true,
         keep_classnames: true,
         keep_fnames: true,
         ecma: 2015,

@@ -1,13 +1,12 @@
 {
-  "extends": "../tsconfig.json",
-  "compileOnSave": false,
+  // TODO: Use one of the tsconfig bases (node19?)
+  // once we use TS 5.x to compile
   "include": ["*.ts"],
   "compilerOptions": {
     "lib": ["ES2021"],
     "types": ["node"],
-    "module": "NodeNext",
-    "moduleResolution": "node",
-    "allowSyntheticDefaultImports": true,
+    "module": "node16",
+    "moduleResolution": "nodenext",
     "target": "es2021"
   }
 }
